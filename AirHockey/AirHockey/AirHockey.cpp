@@ -76,6 +76,7 @@ class Player
 private:
     Point2D m_Position;
     Accel2D m_Accel;
+    int m_Goal;
 
 public:
 
@@ -86,6 +87,7 @@ public:
 
         m_Accel.Accel_x = 0.0;
         m_Accel.Accel_y = 0.0;
+        m_Goal = 0;
     }
 
     Player(int xPos, int yPos, float xAccel, float yAccel)
@@ -95,6 +97,7 @@ public:
 
         m_Accel.Accel_x = xAccel;
         m_Accel.Accel_y = yAccel;
+        m_Goal = 0;
     }
     Point2D GetPos()
     {
@@ -114,8 +117,10 @@ public:
     {
         m_Position.Position_y = pos;
     }
-
-   
+    void Goal(void)
+    {
+        m_Goal++;
+    }
 };
 
 
@@ -296,6 +301,31 @@ public:
             }
         }
     }
+
+    void CheckGoal(Player* p1, Player* p2)
+    {
+
+        if (m_Position.Position_x >= 170 && m_Position.Position_x <= 230)
+        {
+            if (m_Position.Position_y >= 0 && m_Position.Position_y <= 50)
+            {
+                m_Position.Position_x = 200;
+                m_Position.Position_y = 400;
+                m_Accel.Accel_x = 0;
+                m_Accel.Accel_y = 0;
+                p1->Goal();
+               
+            }
+            else if (m_Position.Position_y >= 750 && m_Position.Position_y < 800)
+            {
+                m_Position.Position_x = 200;
+                m_Position.Position_y = 400;
+                m_Accel.Accel_x = 0;
+                m_Accel.Accel_y = 0;
+                p2->Goal();
+            }
+        }
+    }
 };
 
 //
@@ -418,6 +448,11 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             oldBrush = (HBRUSH)SelectObject(hdc, hBrush);
             Ellipse(hdc, player2.GetPos().Position_x - Player_R, player2.GetPos().Position_y - Player_R, player2.GetPos().Position_x + Player_R, player2.GetPos().Position_y + Player_R);
 
+            hBrush = CreateSolidBrush(RGB(0, 255, 255));
+            oldBrush = (HBRUSH)SelectObject(hdc, hBrush);
+            Rectangle(hdc, 170, 0, 230, 50);
+            Rectangle(hdc, 170, 750, 230, 800);
+
             SelectObject(hdc, oldBrush);
             DeleteObject(hBrush);
             
@@ -442,6 +477,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         ball.CheckCollideRacket(&player);
         ball.CheckCollideRacket(&player2);
 
+        ball.CheckGoal(&player,&player2);
         ball.CheckcollideCircuit();
         InvalidateRgn(hWnd, NULL, TRUE);
         UpdateWindow(hWnd);
