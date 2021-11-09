@@ -1,0 +1,20 @@
+﻿  AirHockey.cpp
+C:\Users\임종찬\Desktop\대학\AirHockey\AirHockey\AirHockey.cpp(190,1): warning C4305: '-=': 'double'에서 'float'(으)로 잘립니다.
+C:\Users\임종찬\Desktop\대학\AirHockey\AirHockey\AirHockey.cpp(192,1): warning C4305: '+=': 'double'에서 'float'(으)로 잘립니다.
+C:\Users\임종찬\Desktop\대학\AirHockey\AirHockey\AirHockey.cpp(199,1): warning C4305: '-=': 'double'에서 'float'(으)로 잘립니다.
+C:\Users\임종찬\Desktop\대학\AirHockey\AirHockey\AirHockey.cpp(201,1): warning C4305: '+=': 'double'에서 'float'(으)로 잘립니다.
+C:\Users\임종찬\Desktop\대학\AirHockey\AirHockey\AirHockey.cpp(209,27): warning C4244: '=': 'int'에서 'float'(으)로 변환하면서 데이터가 손실될 수 있습니다.
+C:\Users\임종찬\Desktop\대학\AirHockey\AirHockey\AirHockey.cpp(224,27): warning C4244: '=': 'int'에서 'float'(으)로 변환하면서 데이터가 손실될 수 있습니다.
+C:\Users\임종찬\Desktop\대학\AirHockey\AirHockey\AirHockey.cpp(242,27): warning C4244: '인수': 'float'에서 'int'(으)로 변환하면서 데이터가 손실될 수 있습니다.
+C:\Users\임종찬\Desktop\대학\AirHockey\AirHockey\AirHockey.cpp(251,27): warning C4244: '인수': 'float'에서 'int'(으)로 변환하면서 데이터가 손실될 수 있습니다.
+C:\Users\임종찬\Desktop\대학\AirHockey\AirHockey\AirHockey.cpp(269,67): warning C4244: '인수': 'float'에서 'int'(으)로 변환하면서 데이터가 손실될 수 있습니다.
+C:\Users\임종찬\Desktop\대학\AirHockey\AirHockey\AirHockey.cpp(270,66): warning C4244: '인수': 'float'에서 'int'(으)로 변환하면서 데이터가 손실될 수 있습니다.
+C:\Users\임종찬\Desktop\대학\AirHockey\AirHockey\AirHockey.cpp(275,67): warning C4244: '인수': 'float'에서 'int'(으)로 변환하면서 데이터가 손실될 수 있습니다.
+C:\Users\임종찬\Desktop\대학\AirHockey\AirHockey\AirHockey.cpp(276,57): warning C4244: '인수': 'float'에서 'int'(으)로 변환하면서 데이터가 손실될 수 있습니다.
+C:\Users\임종찬\Desktop\대학\AirHockey\AirHockey\AirHockey.cpp(287,59): warning C4244: '인수': 'float'에서 'int'(으)로 변환하면서 데이터가 손실될 수 있습니다.
+C:\Users\임종찬\Desktop\대학\AirHockey\AirHockey\AirHockey.cpp(288,68): warning C4244: '인수': 'float'에서 'int'(으)로 변환하면서 데이터가 손실될 수 있습니다.
+C:\Users\임종찬\Desktop\대학\AirHockey\AirHockey\AirHockey.cpp(292,58): warning C4244: '인수': 'float'에서 'int'(으)로 변환하면서 데이터가 손실될 수 있습니다.
+C:\Users\임종찬\Desktop\대학\AirHockey\AirHockey\AirHockey.cpp(293,58): warning C4244: '인수': 'float'에서 'int'(으)로 변환하면서 데이터가 손실될 수 있습니다.
+C:\Users\임종찬\Desktop\대학\AirHockey\AirHockey\AirHockey.cpp(436,41): warning C4244: '인수': 'float'에서 'int'(으)로 변환하면서 데이터가 손실될 수 있습니다.
+C:\Users\임종찬\Desktop\대학\AirHockey\AirHockey\AirHockey.cpp(437,41): warning C4244: '인수': 'float'에서 'int'(으)로 변환하면서 데이터가 손실될 수 있습니다.
+  AirHockey.vcxproj -> C:\Users\임종찬\Desktop\대학\AirHockey\Debug\AirHockey.exe
