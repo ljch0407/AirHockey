@@ -3,6 +3,10 @@
 
 #include "framework.h"
 #include "AirHockey.h"
+#include <gdiplus.h>
+using namespace Gdiplus;
+
+#pragma comment(lib,"Gdiplus.lib")
 
 #define MAX_LOADSTRING 100
 
@@ -34,6 +38,12 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     LoadStringW(hInstance, IDC_AIRHOCKEY, szWindowClass, MAX_LOADSTRING);
     MyRegisterClass(hInstance);
 
+
+    ULONG_PTR gdiplusToken;
+    GdiplusStartupInput gdiplusStartupInput;
+    if(GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, NULL)!=Ok)
+        return 0;
+
     // 애플리케이션 초기화를 수행합니다:
     if (!InitInstance (hInstance, nCmdShow))
     {
@@ -54,6 +64,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
         }
     }
 
+    GdiplusShutdown(gdiplusToken);
     return (int) msg.wParam;
 }
 
@@ -289,8 +300,8 @@ public:
                 {
                     if (m_Position.Position_y > point->GetPos().Position_y)
                     {
-                         ChangeAccel_x(-(m_Accel.Accel_x) - point->GetAccel().Accel_x);
-                         ChangeAccel_y(abs((int)(m_Accel.Accel_y)) + point->GetAccel().Accel_y);
+                        ChangeAccel_x(-(m_Accel.Accel_x) - point->GetAccel().Accel_x);
+                        ChangeAccel_y(abs((int)(m_Accel.Accel_y)) + point->GetAccel().Accel_y);
                     }
                     else if (m_Position.Position_y < point->GetPos().Position_y)
                     {
@@ -389,6 +400,8 @@ Ball ball(200, 400, 20, 20);
 POINT mouse;
 HDC hdc;
 
+
+
 //
 //  함수: WndProc(HWND, UINT, WPARAM, LPARAM)
 //
@@ -431,31 +444,36 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     case WM_PAINT:
     {
             PAINTSTRUCT ps;
+
             hdc = BeginPaint(hWnd, &ps);
-            
 
-            hBrush = CreateSolidBrush(RGB(255, 0, 0));
-            oldBrush = (HBRUSH)SelectObject(hdc, hBrush);
-            Ellipse(hdc, player.GetPos().Position_x-Player_R, player.GetPos().Position_y- Player_R, player.GetPos().Position_x + Player_R, player.GetPos().Position_y + Player_R);
+            Bitmap bitmap1(400, 800);
+            Bitmap bitmap2(400, 800);
+            Graphics* g = new Graphics(hdc);
+            Graphics memdc(&bitmap1);
+            Graphics memdc2(&bitmap2);
+            SolidBrush whitebursh(Color(255, 255, 255, 255));
+            memdc.FillRectangle(&whitebursh, 0, 0, 400, 800);
+            memdc2.FillRectangle(&whitebursh, 0, 0, 400, 800);
+
+            Image* image = Image::FromFile(L"image/table1.png");
+            memdc2.DrawImage(image, 0, 0);
            
-
-            hBrush = CreateSolidBrush(RGB(0, 255, 0));
-            oldBrush = (HBRUSH)SelectObject(hdc, hBrush);
-            Ellipse(hdc, ball.GetPos().Position_x - Player_R, ball.GetPos().Position_y - Player_R, ball.GetPos().Position_x + Player_R, ball.GetPos().Position_y + Player_R);
-           
-
-            hBrush = CreateSolidBrush(RGB(0, 0, 255));
-            oldBrush = (HBRUSH)SelectObject(hdc, hBrush);
-            Ellipse(hdc, player2.GetPos().Position_x - Player_R, player2.GetPos().Position_y - Player_R, player2.GetPos().Position_x + Player_R, player2.GetPos().Position_y + Player_R);
-
-            hBrush = CreateSolidBrush(RGB(0, 255, 255));
-            oldBrush = (HBRUSH)SelectObject(hdc, hBrush);
-            Rectangle(hdc, 170, 0, 230, 50);
-            Rectangle(hdc, 170, 750, 230, 800);
-
-            SelectObject(hdc, oldBrush);
-            DeleteObject(hBrush);
+            image = Image::FromFile(L"image/ball.png");
+            memdc2.DrawImage(image, ball.GetPos().Position_x - Player_R, ball.GetPos().Position_y+ Player_R);
             
+            image = Image::FromFile(L"image/enemy_racket.png");
+            memdc2.DrawImage(image, player2.GetPos().Position_x - Player_R, player2.GetPos().Position_y - Player_R);
+
+            image = Image::FromFile(L"image/my_racket.png");
+            memdc2.DrawImage(image, player.GetPos().Position_x - Player_R, player.GetPos().Position_y - Player_R);
+          
+            memdc.DrawImage(&bitmap2,0,0);
+            g->DrawImage(&bitmap1, 0, 0);
+
+            delete image;
+            delete g;
+           
             EndPaint(hWnd, &ps);
         }
         break;
