@@ -1,16 +1,7 @@
 ﻿// AirHockey.cpp : 애플리케이션에 대한 진입점을 정의합니다.
 //
 
-#include "framework.h"
-#include "AirHockey.h"
-#include <gdiplus.h>
-using namespace Gdiplus;
-
-#pragma comment(lib,"Gdiplus.lib")
-
-#define MAX_LOADSTRING 100
-
-#define Player_R 30
+#include "GameHeader.h"
 
 // 전역 변수:
 HINSTANCE hInst;                                // 현재 인스턴스입니다.
@@ -22,6 +13,73 @@ ATOM                MyRegisterClass(HINSTANCE hInstance);
 BOOL                InitInstance(HINSTANCE, int);
 LRESULT CALLBACK    WndProc(HWND, UINT, WPARAM, LPARAM);
 INT_PTR CALLBACK    About(HWND, UINT, WPARAM, LPARAM);
+
+DWORD WINAPI Client(LPVOID arg);
+
+Player player(40, 60, 20, 20);
+Player player2(40, 60, 0, 20);
+Ball ball(200, 400, 20, 20);
+
+POINT mouse;
+HDC hdc;
+
+HWND hEdit, hEdit1, hEdit2;
+
+
+void DisPlayText(char* fmt, ...)
+{
+    va_list arg;
+    va_start(arg, fmt);
+
+    char cbuf[BUFSIZE + 256];
+    vsprintf(cbuf, fmt, arg);
+
+    int nLength = GetWindowTextLength(hEdit2);
+    SendMessage(hEdit2, EM_SETSEL, nLength, nLength);
+    SendMessage(hEdit2, EM_REPLACESEL, FALSE, (LPARAM)cbuf);
+
+    va_end(arg);
+}
+
+void err_quit(char* msg)
+{
+    LPVOID lpMsgBuf;
+    FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM, NULL, WSAGetLastError(), MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+        (LPTSTR)&lpMsgBuf, 0, NULL);
+    MessageBox(NULL, (LPCTSTR)&lpMsgBuf, msg, MB_ICONERROR);
+    LocalFree(lpMsgBuf);
+    exit(1);
+}
+
+void err_display(char* msg)
+{
+    LPVOID lpMsgBuf;
+    FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM, NULL, WSAGetLastError(), MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+        (LPTSTR)&lpMsgBuf, 0, NULL);
+    DisPlayText((char*)"[%s] %s", msg, (char*)lpMsgBuf);
+    LocalFree(lpMsgBuf);
+}
+
+int recvn(SOCKET s, char* buf, int len, int flags)
+{
+    int received;
+    char* ptr = buf;
+    int left = len;
+
+    while (left > 0)
+    {
+        received = recv(s, ptr, left, flags);
+        if (received == SOCKET_ERROR)
+            return SOCKET_ERROR;
+        else if (received == 0)
+            break;
+        left -= received;
+        ptr += received;
+
+    }
+    return len - left;
+
+}
 
 int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
                      _In_opt_ HINSTANCE hPrevInstance,
@@ -50,7 +108,10 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
         return FALSE;
     }
 
+    
     HACCEL hAccelTable = LoadAccelerators(hInstance, MAKEINTRESOURCE(IDC_AIRHOCKEY));
+
+    CreateThread(NULL, 0, Client, NULL, 0, NULL);
 
     MSG msg;
 
@@ -68,276 +129,6 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     return (int) msg.wParam;
 }
 
-//플레이어 에 대한 변수와 구조체 선언
-struct Point2D
-{
-    int Position_x;
-    int Position_y;
-};
-
-struct Accel2D
-{
-    float Accel_x;
-    float Accel_y;
-};
-
-
-class Player
-{
-private:
-    Point2D m_Position;
-    Accel2D m_Accel;
-    int m_Goal;
-
-public:
-
-    Player()
-    {
-        m_Position.Position_x = 0;
-        m_Position.Position_y = 0;
-
-        m_Accel.Accel_x = 0.0;
-        m_Accel.Accel_y = 0.0;
-        m_Goal = 0;
-    }
-
-    Player(int xPos, int yPos, float xAccel, float yAccel)
-    {
-        m_Position.Position_x = xPos;
-        m_Position.Position_y = yPos;
-
-        m_Accel.Accel_x = xAccel;
-        m_Accel.Accel_y = yAccel;
-        m_Goal = 0;
-    }
-    Point2D GetPos()
-    {
-        return m_Position;
-    }
-
-    Accel2D GetAccel()
-    {
-        return m_Accel;
-    }
-
-    void UpdatePos_x(int pos)
-    {
-       m_Position.Position_x = pos; 
-    }
-    void UpdatePos_y(int pos)
-    {
-        m_Position.Position_y = pos;
-    }
-    void Goal(void)
-    {
-        m_Goal++;
-    }
-};
-
-
-
-class Ball
-{
-private:
-    Point2D m_Position;
-    Accel2D m_Accel;
-    bool Collide;
-public:
-
-    Ball()
-    {
-        m_Position.Position_x = 0;
-        m_Position.Position_y = 0;
-
-        m_Accel.Accel_x = 0.0;
-        m_Accel.Accel_y = 0.0;
-        Collide = false;
-    }
-
-    Ball(int xPos, int yPos, float xAccel, float yAccel)
-    {
-        m_Position.Position_x = xPos;
-        m_Position.Position_y = yPos;
-
-        m_Accel.Accel_x = xAccel;
-        m_Accel.Accel_y = yAccel;
-    }
-
-    Point2D GetPos()
-    {
-        return m_Position;
-    }
-
-    Accel2D GetAccel()
-    {
-        return m_Accel;
-    }
-
-    void UpdatePos_x(int Accel)
-    {
-        m_Position.Position_x += Accel;
-        if (m_Position.Position_x + Player_R > 400)
-        {
-            m_Position.Position_x = 370;
-        }
-        else if (m_Position.Position_x - Player_R < 0)
-        {
-            m_Position.Position_x = 30;
-        }
-
-    }
-    void UpdatePos_y(int Accel)
-    {
-        m_Position.Position_y += Accel;
-
-        if (m_Position.Position_y + Player_R > 800)
-        {
-            m_Position.Position_y = 770;
-        }
-        else if (m_Position.Position_y - Player_R < 0)
-        {
-            m_Position.Position_y = 30;
-        }
-    }
-
-    void UpdateAccel_x()
-    {
-        if (m_Accel.Accel_x > 0)
-            m_Accel.Accel_x -= 0.1;
-        else if (m_Accel.Accel_x < 0)
-            m_Accel.Accel_x += 0.1;
-        else
-            m_Accel.Accel_x = 0;
-    }
-    void UpdateAccel_y()
-    {
-        if (m_Accel.Accel_y > 0)
-            m_Accel.Accel_y -= 0.1;
-        else if (m_Accel.Accel_y < 0)
-            m_Accel.Accel_y += 0.1;
-        else
-            m_Accel.Accel_y = 0;
-    }
-
-    void ChangeAccel_x(int val)
-    {
-       
-        m_Accel.Accel_x = val;
-        
-        if (abs((int)m_Accel.Accel_x) >= 20)
-        {
-            if (m_Accel.Accel_x < 0)
-            {
-                m_Accel.Accel_x = -20;
-            }
-            else if (m_Accel.Accel_x > 0)
-                m_Accel.Accel_x = 20;
-        }
-    }
-
-    void ChangeAccel_y(int val)
-    {
-        m_Accel.Accel_y = val;
-
-        if (abs((int)m_Accel.Accel_y) >= 20)
-        {
-            if (m_Accel.Accel_y < 0)
-            {
-                m_Accel.Accel_y = -20;
-            }
-            else if (m_Accel.Accel_y > 0)
-                m_Accel.Accel_y = 20;
-        }
-    }
-
-    void CheckcollideCircuit()
-    {
-        if (m_Position.Position_x + Player_R >= 400)
-        {
-
-            ChangeAccel_x(-(m_Accel.Accel_x));
-        }
-        else if (m_Position.Position_x - Player_R <= 0)
-        {
-            ChangeAccel_x(abs((int)(m_Accel.Accel_x)));
-        }
-
-        if (m_Position.Position_y + Player_R >= 800)
-        {
-            ChangeAccel_y(-(m_Accel.Accel_y));
-        }
-        else if (m_Position.Position_y - Player_R <= 0)
-        {
-            ChangeAccel_y(abs((int)(m_Accel.Accel_y)));
-        }
-    }
-
-    void CheckCollideRacket(Player* point)
-    {
-        if (m_Position.Position_x > point->GetPos().Position_x - 30 && m_Position.Position_x < point->GetPos().Position_x + 30)
-        {
-            if (m_Position.Position_x > point->GetPos().Position_x)
-            {
-                if (m_Position.Position_y + 30 > point->GetPos().Position_y && m_Position.Position_y - 30 < point->GetPos().Position_y)
-                {
-                    if (m_Position.Position_y > point->GetPos().Position_y)
-                    {
-                        ChangeAccel_x(abs((int)(m_Accel.Accel_x)) + point->GetAccel().Accel_x);
-                        ChangeAccel_y(abs((int)(m_Accel.Accel_y))+ point->GetAccel().Accel_y);
-                    }
-
-                    else if (m_Position.Position_y < point->GetPos().Position_y)
-                    {
-                        ChangeAccel_x(abs((int)(m_Accel.Accel_x)) + point->GetAccel().Accel_x);
-                        ChangeAccel_y(-(m_Accel.Accel_y)-point->GetAccel().Accel_y);
-                    }
-                    
-                }
-            }
-            else if (m_Position.Position_x < point->GetPos().Position_x)
-            {
-                if (m_Position.Position_y + 30 > point->GetPos().Position_y && m_Position.Position_y - 30 < point->GetPos().Position_y)
-                {
-                    if (m_Position.Position_y > point->GetPos().Position_y)
-                    {
-                        ChangeAccel_x(-(m_Accel.Accel_x) - point->GetAccel().Accel_x);
-                        ChangeAccel_y(abs((int)(m_Accel.Accel_y)) + point->GetAccel().Accel_y);
-                    }
-                    else if (m_Position.Position_y < point->GetPos().Position_y)
-                    {
-                        ChangeAccel_x(-(m_Accel.Accel_x) - point->GetAccel().Accel_x);
-                        ChangeAccel_y(-(m_Accel.Accel_y) - point->GetAccel().Accel_y);
-                    }
-                }
-            }
-        }
-    }
-
-    void CheckGoal(Player* p1, Player* p2)
-    {
-
-        if (m_Position.Position_x >= 170 && m_Position.Position_x <= 230)
-        {
-            if (m_Position.Position_y >= 0 && m_Position.Position_y <= 50)
-            {
-                m_Position.Position_x = 200;
-                m_Position.Position_y = 400;
-                m_Accel.Accel_x = 0;
-                m_Accel.Accel_y = 0;
-                p1->Goal();
-               
-            }
-            else if (m_Position.Position_y >= 750 && m_Position.Position_y < 800)
-            {
-                m_Position.Position_x = 200;
-                m_Position.Position_y = 400;
-                m_Accel.Accel_x = 0;
-                m_Accel.Accel_y = 0;
-                p2->Goal();
-            }
-        }
-    }
-};
 
 //
 //  함수: MyRegisterClass()
@@ -393,14 +184,6 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
    return TRUE;
 }
 
-Player player(40, 60, 20, 20);
-Player player2(40, 60, 0, 20);
-Ball ball(200, 400, 20, 20);
-
-POINT mouse;
-HDC hdc;
-
-
 
 //
 //  함수: WndProc(HWND, UINT, WPARAM, LPARAM)
@@ -418,7 +201,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
     HBRUSH hBrush, oldBrush;
   
-    SetTimer(hWnd, 1, 10, NULL);
+    SetTimer(hWnd, 1, 1, NULL);
+    SetTimer(hWnd, 2, 100, NULL);
 
     switch (message)
     {
@@ -479,29 +263,39 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         break;
 
     case WM_TIMER:
+        switch (wParam)
+        {
+        case 1:
+            GetCursorPos(&mouse);
+            ScreenToClient(hWnd, &mouse);
+            player.UpdatePos_x(mouse.x);
+            player.UpdatePos_y(mouse.y);
 
-        GetCursorPos(&mouse);
-        ScreenToClient(hWnd, &mouse);
-        player.UpdatePos_x(mouse.x);
-        player.UpdatePos_y(mouse.y);
 
+            ball.UpdatePos_x(ball.GetAccel().Accel_x);
+            ball.UpdatePos_y(ball.GetAccel().Accel_y);
 
-        ball.UpdatePos_x(ball.GetAccel().Accel_x);
-        ball.UpdatePos_y(ball.GetAccel().Accel_y);
+            ball.UpdateAccel_x();
+            ball.UpdateAccel_y();
 
-        ball.UpdateAccel_x();
-        ball.UpdateAccel_y();
+            ball.CheckCollideRacket(&player);
+            ball.CheckCollideRacket(&player2);
+
+            ball.CheckGoal(&player, &player2);
+            ball.CheckcollideCircuit();
+            InvalidateRgn(hWnd, NULL, FALSE);
+            break;
+        case 2:
+            
+            break;
+        default:
+            break;
+        }
         
-        ball.CheckCollideRacket(&player);
-        ball.CheckCollideRacket(&player2);
-
-        ball.CheckGoal(&player,&player2);
-        ball.CheckcollideCircuit();
-        InvalidateRgn(hWnd, NULL, TRUE);
-        UpdateWindow(hWnd);
         break;
     case WM_DESTROY:
         KillTimer(hWnd, 1);
+        KillTimer(hWnd, 2);
         PostQuitMessage(0);
         break;
     default:
@@ -528,4 +322,51 @@ INT_PTR CALLBACK About(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
         break;
     }
     return (INT_PTR)FALSE;
+}
+
+DWORD WINAPI Client(LPVOID arg)
+{
+   
+    int retval;
+
+    WSADATA wsa;
+    if (WSAStartup(MAKEWORD(2, 2), &wsa) != 0)
+        return 1;
+
+    //socket()
+    SOCKET sock = socket(AF_INET, SOCK_STREAM, 0);
+    if (sock == INVALID_SOCKET)
+        err_quit((char*)"socket()");
+
+    SOCKADDR_IN serveraddr;
+    ZeroMemory(&serveraddr, sizeof(serveraddr));
+    serveraddr.sin_family = AF_INET;
+    serveraddr.sin_addr.s_addr = inet_addr(SERVERIP);
+    serveraddr.sin_port = htons(SERVERPORT);
+    retval = connect(sock, (SOCKADDR*)&serveraddr, sizeof(serveraddr));
+    if (retval == SOCKET_ERROR)
+        err_quit((char*)"connect()");
+
+    //데이터 전송
+    while (1)
+    {
+        //플레이어 정보 전송
+        //retval = send(sock, player, sizeof(Player), 0);
+        if (retval == SOCKET_ERROR)
+            err_display((char*)"send()");
+        //서버에서 보내온 다른 플레이어 정보 받기
+        //retval = recvn(sock, player2, sizeof(Player), 0);
+        if (retval == SOCKET_ERROR)
+            err_display((char*)"send()");
+        
+        // 공에 대한 정보 받기
+        //retval = recvn(sock, ball, sizeof(Ball), 0);
+        if (retval == SOCKET_ERROR)
+            err_display((char*)"send()");
+    }
+
+    closesocket(sock);
+
+    WSACleanup();
+    return 0;
 }
