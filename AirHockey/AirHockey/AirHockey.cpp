@@ -2,6 +2,12 @@
 //
 
 #include "GameHeader.h"
+#include <WinSock2.h>
+#include <gdiplus.h>
+#pragma comment(lib,"Gdiplus.lib")
+#pragma comment(lib,"ws2_32")
+using namespace Gdiplus;
+#pragma warning(disable : 4996)
 
 // 전역 변수:
 HINSTANCE hInst;                                // 현재 인스턴스입니다.
@@ -25,6 +31,7 @@ HDC hdc;
 
 HWND hEdit, hEdit1, hEdit2;
 
+SOCKET sock;
 
 void DisPlayText(char* fmt, ...)
 {
@@ -199,7 +206,6 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
 
-    HBRUSH hBrush, oldBrush;
   
     SetTimer(hWnd, 1, 1, NULL);
     SetTimer(hWnd, 2, 100, NULL);
@@ -351,16 +357,16 @@ DWORD WINAPI Client(LPVOID arg)
     while (1)
     {
         //플레이어 정보 전송
-        //retval = send(sock, player, sizeof(Player), 0);
+        retval = send(sock, (char*)&player, sizeof(Player), 0);
         if (retval == SOCKET_ERROR)
             err_display((char*)"send()");
         //서버에서 보내온 다른 플레이어 정보 받기
-        //retval = recvn(sock, player2, sizeof(Player), 0);
+        retval = recvn(sock, (char*)&player2, sizeof(Player), 0);
         if (retval == SOCKET_ERROR)
             err_display((char*)"send()");
         
         // 공에 대한 정보 받기
-        //retval = recvn(sock, ball, sizeof(Ball), 0);
+        retval = recvn(sock, (char*)&ball, sizeof(Ball), 0);
         if (retval == SOCKET_ERROR)
             err_display((char*)"send()");
     }

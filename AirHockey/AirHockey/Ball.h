@@ -1,5 +1,5 @@
 #pragma once
-#include "GameHeader.h"
+#include "framework.h"
 #include "Player.h"
 
 class Ball
