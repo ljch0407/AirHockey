@@ -168,11 +168,10 @@ DWORD WINAPI getClient(LPVOID arg)
 	//update 이벤트 대기
 	//WaitForSingleObject(updateData, INFINITE);
 
+	printf("data 수신 시작\n");
 	//data-recving
 	while (1)
 	{
-		printf("data 수신 시작\n");
-
 		//declare additional-needed data
 
 		//헤더 데이터 수신
@@ -182,6 +181,8 @@ DWORD WINAPI getClient(LPVOID arg)
 			err_display("recv()");
 		}
 		
+		printf("헤더 수신 완료\n");
+
 		//헤더별 분기
 		//header switch
 		header = atoi(buf);
@@ -292,11 +293,10 @@ DWORD WINAPI updateClient(LPVOID arg)
 	//WaitForSingleObject(recvData, INFINITE);
 
 	//sendCommand()
+	printf("data 송신 시작\n");
 
 	while (1)
 	{
-		printf("data 수신 시작\n");
-
 		//헤더 파일 전송
 		snprintf(buf, sizeof(buf), "%d", B_POSITION);
 
@@ -305,10 +305,14 @@ DWORD WINAPI updateClient(LPVOID arg)
 			err_display("send()");
 		}
 
+		printf("헤더 전송 완료\n");
+
 		retval = send(client_sock1, (char*)&bPosition, BUFSIZE, 0);
 		if (retval == SOCKET_ERROR) {
 			err_display("send()");
 		}
+
+		printf("데이터 전송 완료\n");
 	}
 
 	//if (Allconnected)
