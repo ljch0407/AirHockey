@@ -8,8 +8,6 @@
 #include <CommCtrl.h>
 #include "Server.h"
 
-unsigned long clientIP[2];	//두 사용자의 ip 주소(net)
-
 ClientInfo* cInfo;
 SOCKET client_sock1, client_sock2;
 
@@ -25,12 +23,19 @@ bool Game_Start;
 bool Ractket;
 bool Game_end;
 bool Connected1P, Connected2P;
+bool Allconnected;
+
+HANDLE recvData, updateData;
 
 int main() {
 
 	//초기화
 	Connected1P = false;
 	Connected2P = false;
+	Allconnected = false;
+
+	recvData = CreateEvent(nullptr, false, false, nullptr);
+	updateData = CreateEvent(nullptr, false, true, nullptr);
 
 	int retval;
 
@@ -106,13 +111,18 @@ int main() {
 
 	//윈속 종료
 	WSACleanup();
+
+	//이벤트 제거
+	CloseHandle(recvData);
+	CloseHandle(updateData);
+
 	return 0;
 }
 
 //Client의 데이터 수신
 DWORD WINAPI getClient(LPVOID arg)
 {
-	int id;
+	int id, retval, header;
 	SOCKADDR_IN clientAddr;
 	int addrLen;
 	char buf[BUFSIZE];
@@ -141,20 +151,99 @@ DWORD WINAPI getClient(LPVOID arg)
 	addrLen = sizeof(clientAddr);
 	getpeername(argInfo->client_sock, (SOCKADDR*)&clientAddr, &addrLen);
 
+	//update 이벤트 대기
+	WaitForSingleObject(updateData, INFINITE);
+
 	//data-recving
 	while (1)
 	{
 		//declare additional-needed data
 
-		//데이터 수신
-		recvCommand();
+		//헤더 데이터 수신
+		//recvCommand(header);
+		retval = recv(argInfo->client_sock, buf, BUFSIZE, 0);
+		if (retval == SOCKET_ERROR) {
+			err_display("recv()");
+		}
+		
+		//헤더별 분기
+		//header switch
+		header = atoi(buf);
+		switch (header)
+		{
+		case P_POSITION:
+			//포지션 데이터 수신
+			//position data recv
+			retval = recv(argInfo->client_sock, buf, BUFSIZE, 0);
+			if (retval == SOCKET_ERROR) {
+				err_display("recv()");
+			}
+			Point2D* temp;
+			temp = (Point2D*)buf;
+			if (id == 0)
+			{
+				pPosition[0].position_x = temp->position_x;
+				pPosition[0].position_y = temp->position_y;
+			}
+			else
+			{
+				pPosition[1].position_x = temp->position_x;
+				pPosition[1].position_y = temp->position_y;
+			}
+			break;
+		case RACKET_COLLIDE:
+			//충돌 데이터 수신(Position, Accel, Angle)
+			//포지션 데이터 수신
+			retval = recv(argInfo->client_sock, buf, BUFSIZE, 0);
+			if (retval == SOCKET_ERROR) {
+				err_display("recv()");
+			}
+			Point2D* temp;
+			temp = (Point2D*)buf;
+			if (id == 0)
+			{
+				pPosition[0].position_x = temp->position_x;
+				pPosition[0].position_y = temp->position_y;
+			}
+			else
+			{
+				pPosition[1].position_x = temp->position_x;
+				pPosition[1].position_y = temp->position_y;
+			}
+
+			//가속도 데이터 수신
+			retval = recv(argInfo->client_sock, buf, BUFSIZE, 0);
+			if (retval == SOCKET_ERROR) {
+				err_display("recv()");
+			}
+			Accel2D* temp2;
+			temp2 = (Accel2D*)buf;
+			if (id == 0)
+			{
+				pAccel[0].accel_x = temp2->accel_x;
+				pAccel[0].accel_y = temp2->accel_y;
+			}
+			else
+			{
+				pAccel[1].accel_x = temp2->accel_x;
+				pAccel[1].accel_y = temp2->accel_y;
+			}
+			//각 데이터 수신
+			retval = recv(argInfo->client_sock, buf, BUFSIZE, 0);
+			if (retval == SOCKET_ERROR) {
+				err_display("recv()");
+			}
+			collideAngel = atoi(buf);
+			//추가 -> 이거 3개를 충돌 구조체로 묶어서 한번에 송/수신하는 방법은 어떨까?
+			break;
+		}
 
 		//자료 업데이트(의미 없으면 안해도 됨)
 		//update player position -> for 2
 		//update player 
 
-		//이벤트 활성화 후 send() 이벤트 종료 대기
-
+		//이벤트 활성화
+		SetEvent(recvData);
 	}
 
 }
@@ -163,13 +252,31 @@ DWORD WINAPI getClient(LPVOID arg)
 DWORD WINAPI updateClient(LPVOID arg)
 {
 	//server update
-	bool Allconnected = checkAllConnected();
+	if (!Allconnected)
+		Allconnected = checkAllConnected();
 
+	bPosition = updateBall(bAccel);
+	
 	//getclient 종료 대기
+	WaitForSingleObject(recvData, INFINITE);
 
 	//sendCommand()
 
+	//if (Allconnected)
+		//send All-Connected
+	
+	//if (!checkMoveBall())
+		//send STRIKE-Effect
+
+	//if (Game_end)
+		//send Game-End
+
 	//event활성화
+	SetEvent(updateData);
+}
+
+void recvCommand(SOCKET* client_sock)
+{
 }
 
 
@@ -193,7 +300,7 @@ bool checkAllConnected()
 //공의 가속도가 0 이상인지 체크
 bool checkMoveBall()
 {
-	if ((bAccel.accel_x == 0) && (bAccel.accel_y))
+	if ((bAccel.accel_x == 0) && (bAccel.accel_y == 0))
 		return false;
 	else
 		return true;
@@ -232,6 +339,52 @@ void checkGoal()
 			else score += 1;
 		}
 	}
+}
+
+//새로운 공의 위치와 가속도 계산
+Point2D updateBall(Accel2D Accel)
+{
+	Accel2D newAccel = Accel;
+
+	if (bPosition.position_x + BALLSIZE > 400)
+	{
+		bPosition.position_x = 400 - BALLSIZE;
+		bAccel = circuitCollide(newAccel, XSIDE_COLLIDE);
+	}
+	else if (bPosition.position_x - BALLSIZE < 0)
+	{
+		bPosition.position_x = BALLSIZE;
+		bAccel = circuitCollide(newAccel, XSIDE_COLLIDE);
+	}
+
+	if (bPosition.position_y + BALLSIZE > 800)
+	{
+		bPosition.position_y = 800 - BALLSIZE;
+		bAccel = circuitCollide(newAccel, YSIDE_COLLIDE);
+	}
+	else if (bPosition.position_y - BALLSIZE < 0)
+	{
+		bPosition.position_y = BALLSIZE;
+		bAccel = circuitCollide(newAccel, YSIDE_COLLIDE);
+	}
+
+	bPosition.position_x += newAccel.accel_x;
+	bPosition.position_y += newAccel.accel_y;
+
+	return bPosition;
+}
+
+//공과 서킷의 충돌로 인한 공의 가속도 재계산
+Accel2D circuitCollide(Accel2D Accel, int collideType)
+{
+	Accel2D newAccel = Accel;
+
+	if (collideType == XSIDE_COLLIDE)
+		newAccel.accel_x = -newAccel.accel_x;
+	else if (collideType == YSIDE_COLLIDE)
+		newAccel.accel_y = -newAccel.accel_y;
+
+	return newAccel;
 }
 
 //스코어를 확인해서 게임의 종료여부 결정

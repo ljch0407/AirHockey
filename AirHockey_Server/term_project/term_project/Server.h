@@ -2,6 +2,9 @@
 
 #define SERVERPORT 9000
 #define BUFSIZE 1024
+#define BALLSIZE 30
+#define XSIDE_COLLIDE 11
+#define YSIDE_COLLIDE 22
 
 #define P_POSITION 0001
 #define B_POSITION 0002
@@ -36,7 +39,7 @@ struct Accel2D {
 DWORD WINAPI updateClient(LPVOID arg);		//Server내부 업데이트 + 데이터 송신
 DWORD WINAPI getClient(LPVOID arg);			//Client의 데이터 수신
 
-void recvCommand();							//헤더 + 데이터 수신 후 분기 처리
+void recvCommand(SOCKET* client_sock);		//헤더 + 데이터 수신 후 분기 처리
 void sendCommand();							//헤더 + 데이터 송신
 
 //받은 ip 주소 변환하여 저장 -> 단기 폐기
@@ -57,11 +60,11 @@ void checkScore();
 //공 위치와 가속도를 초기화
 void resetBall();
 
-//가속도에 따른 새로운 공의 위치 계산
-Point2D newPosition(Accel2D bAccel);
+//새로운 공의 위치와 가속도 계산
+Point2D updateBall(Accel2D Accel);
 
 //공과 서킷의 충돌로 인한 공의 가속도 재계산
-Accel2D circuitCollide(Accel2D bAccel);
+Accel2D circuitCollide(Accel2D Accel, int collideType);
 
 //공과 라켓의 충돌 처리로 인한 공의 가속도 재계산
-Accel2D racketCollide(Accel2D bAccel);
+Accel2D racketCollide(Accel2D Accel);
