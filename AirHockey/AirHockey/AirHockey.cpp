@@ -9,6 +9,9 @@
 using namespace Gdiplus;
 #pragma warning(disable : 4996)
 
+
+
+
 // 전역 변수:
 HINSTANCE hInst;                                // 현재 인스턴스입니다.
 WCHAR szTitle[MAX_LOADSTRING];                  // 제목 표시줄 텍스트입니다.
@@ -32,6 +35,7 @@ HDC hdc;
 HWND hEdit, hEdit1, hEdit2;
 
 SOCKET sock;
+int COMMAND;
 
 void DisPlayText(char* fmt, ...)
 {
@@ -352,23 +356,31 @@ DWORD WINAPI Client(LPVOID arg)
     retval = connect(sock, (SOCKADDR*)&serveraddr, sizeof(serveraddr));
     if (retval == SOCKET_ERROR)
         err_quit((char*)"connect()");
-
+    Point2D buf;
     //데이터 전송
     while (1)
     {
-        //플레이어 정보 전송
-        retval = send(sock, (char*)&player, sizeof(Player), 0);
-        if (retval == SOCKET_ERROR)
-            err_display((char*)"send()");
-        //서버에서 보내온 다른 플레이어 정보 받기
-        retval = recvn(sock, (char*)&player2, sizeof(Player), 0);
-        if (retval == SOCKET_ERROR)
-            err_display((char*)"send()");
-        
-        // 공에 대한 정보 받기
-        retval = recvn(sock, (char*)&ball, sizeof(Ball), 0);
-        if (retval == SOCKET_ERROR)
-            err_display((char*)"send()");
+        if(COMMAND == P_POSITION)
+        {
+            //플레이어 위치 전송
+            retval = send(sock, (char*)&player.GetPos(), sizeof(Point2D), 0);
+            if (retval == SOCKET_ERROR)
+                err_display((char*)"send()");
+
+        }
+        else if (COMMAND == RACKET_COLLIDE)
+        {
+            retval = send(sock, (char*)&player.GetPos(), sizeof(Point2D), 0);
+            if (retval == SOCKET_ERROR)
+                err_display((char*)"send()");
+            retval = send(sock, (char*)&player.GetAccel(), sizeof(Accel2D), 0);
+            if (retval == SOCKET_ERROR)
+                err_display((char*)"send()");
+        }
+
+        retval = recv(sock, (char*)&buf, sizeof(Point2D), 0);
+        ball.UpdatePos_x(buf.Position_x);
+        ball.UpdatePos_y(buf.Position_y);
     }
 
     closesocket(sock);
