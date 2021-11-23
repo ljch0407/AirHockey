@@ -7,7 +7,7 @@ class Ball
 private:
     Point2D m_Position;
     Accel2D m_Accel;
-    bool Collide;
+    bool Collide = false;
 
 public:
 
@@ -18,8 +18,8 @@ public:
     Point2D GetPos();
     Accel2D GetAccel();
 
-    void UpdatePos_x(int Accel);
-    void UpdatePos_y(int Accel);
+    void UpdatePos_x(float posx);
+    void UpdatePos_y(float posy);
     
     void UpdateAccel_x();
     void UpdateAccel_y();
@@ -30,6 +30,6 @@ public:
    
 
     void CheckcollideCircuit();
-    void CheckCollideRacket(Player* point);
+    bool CheckCollideRacket(Player* point);
     void CheckGoal(Player* p1, Player* p2);
 };

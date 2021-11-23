@@ -14,6 +14,12 @@
 #include <memory.h>
 #include <tchar.h>
 
+#define P_POSITION 0001
+#define B_POSITION 0002
+#define GOAL 0003
+#define MOVE_BALL 0004
+#define RACKET_COLLIDE 0005
+
 #define Player_R 30
 //플레이어 에 대한 변수와 구조체 선언
 struct Point2D

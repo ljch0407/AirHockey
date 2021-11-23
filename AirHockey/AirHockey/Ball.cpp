@@ -29,32 +29,14 @@ Accel2D Ball::GetAccel()
     return m_Accel;
 }
 
-void Ball::UpdatePos_x(int Accel)
+void Ball::UpdatePos_x(float posx)
 {
-    m_Position.Position_x += Accel;
-    if (m_Position.Position_x + Player_R > 400)
-    {
-        m_Position.Position_x = 370;
-    }
-    else if (m_Position.Position_x - Player_R < 0)
-    {
-        m_Position.Position_x = 30;
-    }
-
+    m_Position.Position_x = posx;
 }
 
-void Ball::UpdatePos_y(int Accel)
+void Ball::UpdatePos_y(float posy)
 {
-    m_Position.Position_y += Accel;
-
-    if (m_Position.Position_y + Player_R > 800)
-    {
-        m_Position.Position_y = 770;
-    }
-    else if (m_Position.Position_y - Player_R < 0)
-    {
-        m_Position.Position_y = 30;
-    }
+    m_Position.Position_y = posy;
 }
 
 void Ball::UpdateAccel_x()
@@ -130,7 +112,7 @@ void Ball::CheckcollideCircuit()
     }
 }
 
-void Ball::CheckCollideRacket(Player* point)
+bool Ball::CheckCollideRacket(Player* point)
 {
     if (m_Position.Position_x > point->GetPos().Position_x - 30 && m_Position.Position_x < point->GetPos().Position_x + 30)
     {
@@ -138,37 +120,22 @@ void Ball::CheckCollideRacket(Player* point)
         {
             if (m_Position.Position_y + 30 > point->GetPos().Position_y && m_Position.Position_y - 30 < point->GetPos().Position_y)
             {
-                if (m_Position.Position_y > point->GetPos().Position_y)
-                {
-                    ChangeAccel_x(abs((int)(m_Accel.Accel_x)) + point->GetAccel().Accel_x);
-                    ChangeAccel_y(abs((int)(m_Accel.Accel_y)) + point->GetAccel().Accel_y);
-                }
-
-                else if (m_Position.Position_y < point->GetPos().Position_y)
-                {
-                    ChangeAccel_x(abs((int)(m_Accel.Accel_x)) + point->GetAccel().Accel_x);
-                    ChangeAccel_y(-(m_Accel.Accel_y) - point->GetAccel().Accel_y);
-                }
-
+                Collide = true;
+                return Collide;
             }
         }
         else if (m_Position.Position_x < point->GetPos().Position_x)
         {
             if (m_Position.Position_y + 30 > point->GetPos().Position_y && m_Position.Position_y - 30 < point->GetPos().Position_y)
             {
-                if (m_Position.Position_y > point->GetPos().Position_y)
-                {
-                    ChangeAccel_x(-(m_Accel.Accel_x) - point->GetAccel().Accel_x);
-                    ChangeAccel_y(abs((int)(m_Accel.Accel_y)) + point->GetAccel().Accel_y);
-                }
-                else if (m_Position.Position_y < point->GetPos().Position_y)
-                {
-                    ChangeAccel_x(-(m_Accel.Accel_x) - point->GetAccel().Accel_x);
-                    ChangeAccel_y(-(m_Accel.Accel_y) - point->GetAccel().Accel_y);
-                }
+                Collide = true;
+                return Collide;
             }
         }
     }
+
+    Collide = false;
+    return Collide;
 }
 
 void Ball::CheckGoal(Player* p1, Player* p2)

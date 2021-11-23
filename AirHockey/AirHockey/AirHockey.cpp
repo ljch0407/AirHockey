@@ -35,7 +35,7 @@ HDC hdc;
 HWND hEdit, hEdit1, hEdit2;
 
 SOCKET sock;
-int COMMAND;
+int COMMAND = P_POSITION;
 
 void DisPlayText(char* fmt, ...)
 {
@@ -281,15 +281,13 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             player.UpdatePos_x(mouse.x);
             player.UpdatePos_y(mouse.y);
 
-
-            ball.UpdatePos_x(ball.GetAccel().Accel_x);
-            ball.UpdatePos_y(ball.GetAccel().Accel_y);
-
             ball.UpdateAccel_x();
             ball.UpdateAccel_y();
 
-            ball.CheckCollideRacket(&player);
-            ball.CheckCollideRacket(&player2);
+            if (ball.CheckCollideRacket(&player))
+            {
+                COMMAND = RACKET_COLLIDE;
+            }
 
             ball.CheckGoal(&player, &player2);
             ball.CheckcollideCircuit();
@@ -357,30 +355,36 @@ DWORD WINAPI Client(LPVOID arg)
     if (retval == SOCKET_ERROR)
         err_quit((char*)"connect()");
     Point2D buf;
+    Accel2D A_buf;
     //데이터 전송
     while (1)
     {
-        if(COMMAND == P_POSITION)
+        
+        retval = recv(sock, (char*)&buf, sizeof(Point2D), 0);
+        ball.UpdatePos_x(buf.Position_x);
+        ball.UpdatePos_y(buf.Position_y);
+
+        if (COMMAND == P_POSITION)
         {
+            buf = player.GetPos();
             //플레이어 위치 전송
-            retval = send(sock, (char*)&player.GetPos(), sizeof(Point2D), 0);
+            retval = send(sock, (char*)&buf, sizeof(Point2D), 0);
             if (retval == SOCKET_ERROR)
                 err_display((char*)"send()");
 
         }
         else if (COMMAND == RACKET_COLLIDE)
         {
-            retval = send(sock, (char*)&player.GetPos(), sizeof(Point2D), 0);
+            buf = player.GetPos();
+            A_buf = player.GetAccel();
+            retval = send(sock, (char*)&buf, sizeof(Point2D), 0);
             if (retval == SOCKET_ERROR)
                 err_display((char*)"send()");
-            retval = send(sock, (char*)&player.GetAccel(), sizeof(Accel2D), 0);
+            retval = send(sock, (char*)&A_buf, sizeof(Accel2D), 0);
             if (retval == SOCKET_ERROR)
                 err_display((char*)"send()");
         }
 
-        retval = recv(sock, (char*)&buf, sizeof(Point2D), 0);
-        ball.UpdatePos_x(buf.Position_x);
-        ball.UpdatePos_y(buf.Position_y);
     }
 
     closesocket(sock);
