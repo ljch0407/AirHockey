@@ -359,13 +359,9 @@ DWORD WINAPI Client(LPVOID arg)
     //데이터 전송
     while (1)
     {
-        
-        retval = recv(sock, (char*)&buf, sizeof(Point2D), 0);
-        ball.UpdatePos_x(buf.Position_x);
-        ball.UpdatePos_y(buf.Position_y);
-
         if (COMMAND == P_POSITION)
         {
+            retval = send(sock, (char*)&COMMAND, sizeof(int), 0);
             buf = player.GetPos();
             //플레이어 위치 전송
             retval = send(sock, (char*)&buf, sizeof(Point2D), 0);
@@ -375,6 +371,9 @@ DWORD WINAPI Client(LPVOID arg)
         }
         else if (COMMAND == RACKET_COLLIDE)
         {
+
+            retval = send(sock, (char*)&COMMAND, sizeof(int), 0);
+            //플레이어 위치 및 가속도 서버에 전달
             buf = player.GetPos();
             A_buf = player.GetAccel();
             retval = send(sock, (char*)&buf, sizeof(Point2D), 0);
@@ -384,6 +383,13 @@ DWORD WINAPI Client(LPVOID arg)
             if (retval == SOCKET_ERROR)
                 err_display((char*)"send()");
         }
+
+
+        retval = recv(sock, (char*)&buf, sizeof(Point2D), 0);
+        if (retval == SOCKET_ERROR)
+            err_display((char*)"send()");
+        ball.UpdatePos_x(buf.Position_x);
+        ball.UpdatePos_y(buf.Position_y);
 
     }
 
