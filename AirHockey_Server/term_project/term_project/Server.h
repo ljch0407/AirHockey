@@ -42,11 +42,14 @@ DWORD WINAPI getClient(LPVOID arg);			//Client의 데이터 수신
 void recvCommand(SOCKET* client_sock);		//헤더 + 데이터 수신 후 분기 처리
 void sendCommand();							//헤더 + 데이터 송신
 
+void err_quit(const char* msg);
+void err_display(const char* msg);
+
 //받은 ip 주소 변환하여 저장 -> 단기 폐기
 //void recvIP(SOCKADDR* clientAddr);
 
 //플레이어가 모두 연결되었다면 GameStart 변수를 클라에게 전송
-bool checkAllConnected();
+void checkAllConnected();
 
 //공의 가속도가 0 이상인지 체크
 bool checkMoveBall();
