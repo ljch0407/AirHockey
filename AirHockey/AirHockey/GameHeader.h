@@ -9,8 +9,8 @@
 
 #define MAX_LOADSTRING 100
 
-//#define SERVERIP "127.0.0.1"
-#define SERVERIP "192.168.100.255"
+#define SERVERIP "127.0.0.1"
+//#define SERVERIP "192.168.100.255"
 #define SERVERPORT  9000
 #define BUFSIZE 512
 

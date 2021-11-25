@@ -26,8 +26,8 @@ struct ClientInfo {
 
 //객체의 2차원 좌표
 struct Point2D {
-	float position_x;
-	float position_y;
+	int position_x;
+	int position_y;
 };
 
 //객체의 2차원 가속도

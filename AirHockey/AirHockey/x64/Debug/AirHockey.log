@@ -1,0 +1,4 @@
+﻿  AirHockey.cpp
+D:\STUDY\2021\AirHockey\AirHockey\AirHockey\AirHockey.cpp(358,10): warning C4101: 'buf' :참조되지 않은 지역 변수입니다.
+D:\STUDY\2021\AirHockey\AirHockey\AirHockey\AirHockey.cpp(359,13): warning C4101: 'A_buf' :참조되지 않은 지역 변수입니다.
+  AirHockey.vcxproj -> D:\STUDY\2021\AirHockey\AirHockey\x64\Debug\AirHockey.exe

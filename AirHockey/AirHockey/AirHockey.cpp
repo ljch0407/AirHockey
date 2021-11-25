@@ -286,7 +286,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
             if (ball.CheckCollideRacket(&player))
             {
-                COMMAND = RACKET_COLLIDE;
+                //COMMAND = RACKET_COLLIDE;
             }
 
             ball.CheckGoal(&player, &player2);
@@ -354,26 +354,37 @@ DWORD WINAPI Client(LPVOID arg)
     retval = connect(sock, (SOCKADDR*)&serveraddr, sizeof(serveraddr));
     if (retval == SOCKET_ERROR)
         err_quit((char*)"connect()");
-    Point2D buf;
+    //Point2D buf;
+    char buf[BUFSIZE];
     Accel2D A_buf;
+    char hbuf[BUFSIZE];
     //데이터 전송
     while (1)
     {
         
-        retval = recv(sock, (char*)&buf, sizeof(Point2D), 0);
-        ball.UpdatePos_x(buf.Position_x);
-        ball.UpdatePos_y(buf.Position_y);
+        //retval = recv(sock, (char*)&buf, sizeof(Point2D), 0);
+        //ball.UpdatePos_x(buf.Position_x);
+        //ball.UpdatePos_y(buf.Position_y);
 
         if (COMMAND == P_POSITION)
         {
-            buf = player.GetPos();
+            snprintf(hbuf, sizeof(hbuf), "%d", P_POSITION);
+            retval = send(sock, hbuf, BUFSIZE, 0);
+
+            Point2D* temp;
+            Point2D tbuf;
+            //temp = player.GetPos();
+            tbuf.Position_x = 40;
+            tbuf.Position_y = 40;
+            temp = &tbuf;
+            //snprintf(buf, sizeof(buf), "%d %d", temp.Position_x, temp.Position_y);
             //플레이어 위치 전송
-            retval = send(sock, (char*)&buf, sizeof(Point2D), 0);
+            retval = send(sock, (char*)temp, BUFSIZE, 0);
             if (retval == SOCKET_ERROR)
                 err_display((char*)"send()");
 
         }
-        else if (COMMAND == RACKET_COLLIDE)
+        /*else if (COMMAND == RACKET_COLLIDE)
         {
             buf = player.GetPos();
             A_buf = player.GetAccel();
@@ -383,7 +394,7 @@ DWORD WINAPI Client(LPVOID arg)
             retval = send(sock, (char*)&A_buf, sizeof(Accel2D), 0);
             if (retval == SOCKET_ERROR)
                 err_display((char*)"send()");
-        }
+        }*/
 
     }
 

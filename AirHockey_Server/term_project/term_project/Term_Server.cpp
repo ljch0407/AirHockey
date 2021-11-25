@@ -108,8 +108,8 @@ int main() {
 		if (Game_Start)
 		{
 			//서버 업데이트 + 데이터 전송하는 스레드 -> Event처리를 통해 sendcommand()는 gc1,2의 종료를 기다림 
-			updateClientThread = CreateThread(nullptr, 0, updateClient, (LPVOID)cInfo, 0, nullptr);
-			Game_Start = false;
+			//updateClientThread = CreateThread(nullptr, 0, updateClient, (LPVOID)cInfo, 0, nullptr);
+			//Game_Start = false;
 		}
 	}
 
@@ -181,7 +181,8 @@ DWORD WINAPI getClient(LPVOID arg)
 			err_display("recv()");
 		}
 		
-		printf("헤더 수신 완료\n");
+		header = atoi(buf);
+		printf("헤더 수신 완료: %d\n", header);
 
 		//헤더별 분기
 		//header switch
@@ -195,18 +196,20 @@ DWORD WINAPI getClient(LPVOID arg)
 			if (retval == SOCKET_ERROR) {
 				err_display("recv()");
 			}
+			
 			Point2D* temp;
 			temp = (Point2D*)buf;
+
 			if (id == 0)
 			{
 				pPosition[0].position_x = temp->position_x;
 				pPosition[0].position_y = temp->position_y;
-				printf("[TCP 클라이언트 전송 정보] pPosition.x : %f, pPosition.y : %f\n", pPosition[0].position_x, pPosition[0].position_y);
+				printf("[TCP 클라이언트 전송 정보] pPosition.x : %d, pPosition.y : %d\n", pPosition[0].position_x, pPosition[0].position_y);
 			}
 			else
 			{
-				pPosition[1].position_x = temp->position_x;
-				pPosition[1].position_y = temp->position_y;
+				//pPosition[1].position_x = temp->position_x;
+				//pPosition[1].position_y = temp->position_y;
 			}
 			break;
 		//case RACKET_COLLIDE:
