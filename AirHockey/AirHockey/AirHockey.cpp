@@ -4,13 +4,14 @@
 #include "GameHeader.h"
 #include <WinSock2.h>
 #include <gdiplus.h>
+#include <iostream>
 #pragma comment(lib,"Gdiplus.lib")
 #pragma comment(lib,"ws2_32")
 using namespace Gdiplus;
 #pragma warning(disable : 4996)
 
 
-
+HANDLE recvData, updateData;
 
 // 전역 변수:
 HINSTANCE hInst;                                // 현재 인스턴스입니다.
@@ -24,6 +25,7 @@ LRESULT CALLBACK    WndProc(HWND, UINT, WPARAM, LPARAM);
 INT_PTR CALLBACK    About(HWND, UINT, WPARAM, LPARAM);
 
 DWORD WINAPI Client(LPVOID arg);
+DWORD WINAPI Update(LPVOID arg);
 
 Player player(40, 60, 20, 20);
 Player player2(40, 60, 0, 20);
@@ -102,6 +104,20 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
     // TODO: 여기에 코드를 입력합니다.
 
+#ifdef _DEBUG
+    if (::AllocConsole() == TRUE) {
+        FILE* nfp[3];
+        freopen_s(nfp + 0, "CONOUT$", "rb", stdin);
+        freopen_s(nfp + 1, "CONOUT$", "wb", stdout);
+        freopen_s(nfp + 2, "CONOUT$", "wb", stderr);
+        std::ios::sync_with_stdio();
+    }
+#endif
+
+    //이벤트 설정
+    recvData = CreateEvent(nullptr, false, false, nullptr);
+    updateData = CreateEvent(nullptr, false, true, nullptr);
+
     // 전역 문자열을 초기화합니다.
     LoadStringW(hInstance, IDS_APP_TITLE, szTitle, MAX_LOADSTRING);
     LoadStringW(hInstance, IDC_AIRHOCKEY, szWindowClass, MAX_LOADSTRING);
@@ -122,7 +138,29 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     
     HACCEL hAccelTable = LoadAccelerators(hInstance, MAKEINTRESOURCE(IDC_AIRHOCKEY));
 
-    CreateThread(NULL, 0, Client, NULL, 0, NULL);
+    //네트워크 연결 설정
+    int retval;
+
+    WSADATA wsa;
+    if (WSAStartup(MAKEWORD(2, 2), &wsa) != 0)
+        return 1;
+
+    //socket()
+    SOCKET sock = socket(AF_INET, SOCK_STREAM, 0);
+    if (sock == INVALID_SOCKET)
+        err_quit((char*)"socket()");
+
+    SOCKADDR_IN serveraddr;
+    ZeroMemory(&serveraddr, sizeof(serveraddr));
+    serveraddr.sin_family = AF_INET;
+    serveraddr.sin_addr.s_addr = inet_addr(SERVERIP);
+    serveraddr.sin_port = htons(SERVERPORT);
+    retval = connect(sock, (SOCKADDR*)&serveraddr, sizeof(serveraddr));
+    if (retval == SOCKET_ERROR)
+        err_quit((char*)"connect()");
+
+    CreateThread(NULL, 0, Client, (LPVOID)sock, 0, NULL);
+    CreateThread(nullptr, 0, Update, (LPVOID)sock, 0, nullptr);
 
     MSG msg;
 
@@ -302,6 +340,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         
         break;
     case WM_DESTROY:
+        FreeConsole();
         KillTimer(hWnd, 1);
         KillTimer(hWnd, 2);
         PostQuitMessage(0);
@@ -334,56 +373,50 @@ INT_PTR CALLBACK About(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 
 DWORD WINAPI Client(LPVOID arg)
 {
-   
-    int retval;
-
-    WSADATA wsa;
-    if (WSAStartup(MAKEWORD(2, 2), &wsa) != 0)
-        return 1;
-
-    //socket()
-    SOCKET sock = socket(AF_INET, SOCK_STREAM, 0);
-    if (sock == INVALID_SOCKET)
-        err_quit((char*)"socket()");
-
-    SOCKADDR_IN serveraddr;
-    ZeroMemory(&serveraddr, sizeof(serveraddr));
-    serveraddr.sin_family = AF_INET;
-    serveraddr.sin_addr.s_addr = inet_addr(SERVERIP);
-    serveraddr.sin_port = htons(SERVERPORT);
-    retval = connect(sock, (SOCKADDR*)&serveraddr, sizeof(serveraddr));
-    if (retval == SOCKET_ERROR)
-        err_quit((char*)"connect()");
-    //Point2D buf;
+    int id, retval, header;
+    SOCKADDR_IN clientAddr;
+    int addrLen;
     char buf[BUFSIZE];
-    Accel2D A_buf;
+    SOCKET client_sock = (SOCKET)arg;
+
+    //getpeername
+    addrLen = sizeof(clientAddr);
+    getpeername(client_sock, (SOCKADDR*)&clientAddr, &addrLen);
+
     char hbuf[BUFSIZE];
     //데이터 전송
     while (1)
     {
-        
-        //retval = recv(sock, (char*)&buf, sizeof(Point2D), 0);
-        //ball.UpdatePos_x(buf.Position_x);
-        //ball.UpdatePos_y(buf.Position_y);
+        //update 이벤트 대기
+        WaitForSingleObject(updateData, INFINITE);
 
-        if (COMMAND == P_POSITION)
-        {
-            snprintf(hbuf, sizeof(hbuf), "%d", P_POSITION);
-            retval = send(sock, hbuf, BUFSIZE, 0);
+        snprintf(hbuf, sizeof(hbuf), "%d", P_POSITION);
+        retval = send(client_sock, hbuf, sizeof(int), 0);
 
-            Point2D* temp;
-            Point2D tbuf;
-            //temp = player.GetPos();
-            tbuf.Position_x = 40;
-            tbuf.Position_y = 40;
-            temp = &tbuf;
-            //snprintf(buf, sizeof(buf), "%d %d", temp.Position_x, temp.Position_y);
-            //플레이어 위치 전송
-            retval = send(sock, (char*)temp, BUFSIZE, 0);
-            if (retval == SOCKET_ERROR)
-                err_display((char*)"send()");
+        Point2D tbuf;
+        tbuf = ball.GetPos();
+        retval = send(client_sock, (char*)&tbuf, sizeof(Point2D), 0);
+        if (retval == SOCKET_ERROR)
+        err_display((char*)"send()");
 
-        }
+        //if (COMMAND == P_POSITION)
+        //{
+        //    snprintf(hbuf, sizeof(hbuf), "%d", P_POSITION);
+        //    retval = send(sock, hbuf, BUFSIZE, 0);
+
+        //    Point2D* temp;
+        //    Point2D tbuf;
+        //    //temp = player.GetPos();
+        //    tbuf.Position_x = 40;
+        //    //tbuf.Position_y = 40;
+        //    //temp = &tbuf;
+        //    //snprintf(buf, sizeof(buf), "%d %d", temp.Position_x, temp.Position_y);
+        //    //플레이어 위치 전송
+        //    retval = send(sock, (char*)tbuf.Position_x, sizeof(int), 0);
+        //    if (retval == SOCKET_ERROR)
+        //        err_display((char*)"send()");
+
+        //}
         /*else if (COMMAND == RACKET_COLLIDE)
         {
             buf = player.GetPos();
@@ -396,10 +429,46 @@ DWORD WINAPI Client(LPVOID arg)
                 err_display((char*)"send()");
         }*/
 
+        //이벤트 활성화
+        SetEvent(recvData);
+
     }
 
     closesocket(sock);
 
     WSACleanup();
     return 0;
+}
+
+DWORD WINAPI Update(LPVOID arg)
+{
+    int id, retval, header;
+    SOCKADDR_IN clientAddr;
+    int addrLen;
+    char buf[BUFSIZE];
+    SOCKET client_sock = (SOCKET)arg;
+
+    //getpeername
+    addrLen = sizeof(clientAddr);
+    getpeername(client_sock, (SOCKADDR*)&clientAddr, &addrLen);
+
+    while (1)
+    {
+        WaitForSingleObject(recvData, INFINITE);
+
+        retval = recvn(client_sock, buf, sizeof(int), 0);
+        printf("헤더 데이터: %d\n", atoi(buf));
+
+        retval = recvn(client_sock, buf, sizeof(Point2D), 0);
+
+        Point2D* temp;
+        temp = (Point2D*)buf;
+
+        printf("Position_X: %d, Position_Y: %d\n", temp->Position_x, temp->Position_y);
+
+        ball.UpdatePos_x(temp->Position_x);
+        ball.UpdatePos_y(temp->Position_y);
+
+        SetEvent(updateData);
+    }
 }

@@ -44,6 +44,7 @@ void sendCommand();							//헤더 + 데이터 송신
 
 void err_quit(const char* msg);
 void err_display(const char* msg);
+int recvn(SOCKET s, char* buf, int len, int flags);
 
 //받은 ip 주소 변환하여 저장 -> 단기 폐기
 //void recvIP(SOCKADDR* clientAddr);

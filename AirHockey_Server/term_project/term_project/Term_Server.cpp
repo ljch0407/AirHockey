@@ -105,11 +105,15 @@ int main() {
 		//	getClientThread[1] = CreateThread(nullptr, 0, getClient, (LPVOID)client_sock, 0, nullptr);
 		//}
 
-		if (Game_Start)
+		while (1)
 		{
-			//서버 업데이트 + 데이터 전송하는 스레드 -> Event처리를 통해 sendcommand()는 gc1,2의 종료를 기다림 
-			//updateClientThread = CreateThread(nullptr, 0, updateClient, (LPVOID)cInfo, 0, nullptr);
-			//Game_Start = false;
+			if (Game_Start)
+			{
+				//서버 업데이트 + 데이터 전송하는 스레드 -> Event처리를 통해 sendcommand()는 gc1,2의 종료를 기다림 
+				updateClientThread = CreateThread(nullptr, 0, updateClient, (LPVOID)cInfo, 0, nullptr);
+				Game_Start = false;
+				break;
+			}
 		}
 	}
 
@@ -165,18 +169,18 @@ DWORD WINAPI getClient(LPVOID arg)
 	addrLen = sizeof(clientAddr);
 	getpeername(argInfo->client_sock, (SOCKADDR*)&clientAddr, &addrLen);
 
-	//update 이벤트 대기
-	//WaitForSingleObject(updateData, INFINITE);
-
 	printf("data 수신 시작\n");
 	//data-recving
 	while (1)
 	{
 		//declare additional-needed data
 
+		//update 이벤트 대기
+		WaitForSingleObject(updateData, INFINITE);
+
 		//헤더 데이터 수신
 		//recvCommand(header);
-		retval = recv(argInfo->client_sock, buf, BUFSIZE, 0);
+		retval = recvn(argInfo->client_sock, buf, sizeof(int), 0);
 		if (retval == SOCKET_ERROR) {
 			err_display("recv()");
 		}
@@ -192,7 +196,7 @@ DWORD WINAPI getClient(LPVOID arg)
 		case P_POSITION:
 			//포지션 데이터 수신
 			//position data recv
-			retval = recv(argInfo->client_sock, buf, BUFSIZE, 0);
+			retval = recvn(argInfo->client_sock, buf, sizeof(Point2D), 0);
 			if (retval == SOCKET_ERROR) {
 				err_display("recv()");
 			}
@@ -259,12 +263,14 @@ DWORD WINAPI getClient(LPVOID arg)
 		//	break;
 		}
 
+		//이벤트 활성화
+		SetEvent(recvData);
+
 		//자료 업데이트(의미 없으면 안해도 됨)
 		//update player position -> for 2
 		//update player 
 
-		//이벤트 활성화
-		//SetEvent(recvData);
+
 	}
 
 }
@@ -272,6 +278,10 @@ DWORD WINAPI getClient(LPVOID arg)
 //서버 업데이트 + 양 클라이언트에게 데이터 전송
 DWORD WINAPI updateClient(LPVOID arg)
 {
+	printf("update 실행\n");
+
+	//클라이언트 번호 처리(각 클라이언트 정보 구분)
+
 	ClientInfo* tempinfo;
 	tempinfo = (ClientInfo*)arg;
 
@@ -291,31 +301,41 @@ DWORD WINAPI updateClient(LPVOID arg)
 	
 
 	//bPosition = updateBall(bAccel);
-	
-	//getclient 종료 대기
-	//WaitForSingleObject(recvData, INFINITE);
 
 	//sendCommand()
 	printf("data 송신 시작\n");
 
 	while (1)
 	{
+		//getclient 종료 대기
+		WaitForSingleObject(recvData, INFINITE);
+
 		//헤더 파일 전송
 		snprintf(buf, sizeof(buf), "%d", B_POSITION);
 
-		retval = send(client_sock1, buf, BUFSIZE, 0);
+		retval = send(client_sock1, buf, sizeof(int), 0);
 		if (retval == SOCKET_ERROR) {
 			err_display("send()");
 		}
 
 		printf("헤더 전송 완료\n");
 
-		retval = send(client_sock1, (char*)&bPosition, BUFSIZE, 0);
+		pPosition[0].position_x += 1;
+		pPosition[0].position_y += 1;
+
+		Point2D temp;
+		temp.position_x = pPosition[0].position_x;
+		temp.position_y = pPosition[0].position_y;
+
+		retval = send(client_sock1, (char*)&temp, sizeof(Point2D), 0);
 		if (retval == SOCKET_ERROR) {
 			err_display("send()");
 		}
 
-		printf("데이터 전송 완료\n");
+		printf("데이터 전송 완료: position_x: %d, position_y: %d\n", temp.position_x, temp.position_y);
+
+		//event활성화
+		SetEvent(updateData);
 	}
 
 	//if (Allconnected)
@@ -327,8 +347,7 @@ DWORD WINAPI updateClient(LPVOID arg)
 	//if (Game_end)
 		//send Game-End
 
-	//event활성화
-	//SetEvent(updateData);
+
 }
 
 void recvCommand(SOCKET* client_sock)
