@@ -1,4 +1,0 @@
-﻿  Term_Server.cpp
-D:\2102\NGP\TermProject\AirHockey\AirHockey_Server\term_project\term_project\Term_Server.cpp(447,42): warning C4244: '+=': 'float'에서 'int'(으)로 변환하면서 데이터가 손실될 수 있습니다.
-D:\2102\NGP\TermProject\AirHockey\AirHockey_Server\term_project\term_project\Term_Server.cpp(448,42): warning C4244: '+=': 'float'에서 'int'(으)로 변환하면서 데이터가 손실될 수 있습니다.
-  term_project.vcxproj -> D:\2102\NGP\TermProject\AirHockey\AirHockey_Server\term_project\Debug\term_project.exe

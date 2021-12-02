@@ -35,6 +35,10 @@ int main() {
 	bPosition.position_x = 200;
 	bPosition.position_y = 400;
 
+	pPosition[1].position_x = 100;
+	pPosition[1].position_y = 700;
+
+
 	recvData = CreateEvent(nullptr, false, false, nullptr);
 	updateData = CreateEvent(nullptr, false, true, nullptr);
 
@@ -325,6 +329,8 @@ DWORD WINAPI updateClient(LPVOID arg)
 
 		//공 업데이트
 		bPosition = updateBall(bAccel);
+		pPosition[1].position_x += 1;
+		pPosition[1].position_y -= 1;
 
 		Point2D temp;
 		temp.position_x = bPosition.position_x;
@@ -335,7 +341,17 @@ DWORD WINAPI updateClient(LPVOID arg)
 			err_display("send()");
 		}
 
-		printf("데이터 전송 완료: position_x: %d, position_y: %d\n", temp.position_x, temp.position_y);
+		printf("공 데이터 전송 완료: position_x: %d, position_y: %d\n", temp.position_x, temp.position_y);
+
+		temp.position_x = pPosition[1].position_x;
+		temp.position_y = pPosition[1].position_y;
+
+		retval = send(client_sock1, (char*)&temp, sizeof(Point2D), 0);
+		if (retval == SOCKET_ERROR) {
+			err_display("send()");
+		}
+
+		printf("플레이어 데이터 전송 완료: position_x: %d, position_y: %d\n", temp.position_x, temp.position_y);
 
 		//event활성화
 		SetEvent(updateData);
