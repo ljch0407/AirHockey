@@ -39,6 +39,38 @@ HWND hEdit, hEdit1, hEdit2;
 SOCKET sock;
 int COMMAND = P_POSITION;
 
+int Poschangex(int x)
+{
+    int temp = 0;
+    if (x >= 200)
+    {
+        temp = x - 200;
+        x = x - temp * 2;
+    }
+    else if(x<200)
+    {
+        temp = 200 - x;
+        x = x + temp * 2;
+    }
+    return x;
+}
+
+int Poschangey(int y)
+{
+    int temp = 0;
+    if (y >= 400)
+    {
+        temp = y - 400;
+        y = y - temp * 2;
+    }
+    else if (y < 400)
+    {
+        temp = 400 - y;
+        y = y + temp * 2;
+    }
+    return y;
+}
+
 void DisPlayText(char* fmt, ...)
 {
     va_list arg;
@@ -337,7 +369,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     case WM_DESTROY:
         FreeConsole();
         KillTimer(hWnd, 1);
-        KillTimer(hWnd, 2);
         PostQuitMessage(0);
         break;
     default:
@@ -441,8 +472,8 @@ DWORD WINAPI Update(LPVOID arg)
 
         printf("2P - Position_X: %d, Position_Y: %d\n", temp->Position_x, temp->Position_y);
 
-        player2.UpdatePos_x(temp->Position_x);
-        player2.UpdatePos_y(temp->Position_y);
+        player2.UpdatePos_x(Poschangex(temp->Position_x));
+        player2.UpdatePos_y(Poschangey(temp->Position_y));
 
         SetEvent(updateData);
     }
