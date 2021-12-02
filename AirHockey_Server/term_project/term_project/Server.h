@@ -32,8 +32,8 @@ struct Point2D {
 
 //객체의 2차원 가속도
 struct Accel2D {
-	float accel_x;
-	float accel_y;
+	int accel_x;
+	int accel_y;
 };
 
 DWORD WINAPI updateClient(LPVOID arg);		//Server내부 업데이트 + 데이터 송신
@@ -50,7 +50,7 @@ int recvn(SOCKET s, char* buf, int len, int flags);
 //void recvIP(SOCKADDR* clientAddr);
 
 //플레이어가 모두 연결되었다면 GameStart 변수를 클라에게 전송
-void checkAllConnected();
+bool checkAllConnected();
 
 //공의 가속도가 0 이상인지 체크
 bool checkMoveBall();
