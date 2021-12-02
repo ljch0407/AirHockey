@@ -249,8 +249,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
 
   
-    SetTimer(hWnd, 1, 1, NULL);
-    SetTimer(hWnd, 2, 100, NULL);
+    SetTimer(hWnd, 1, 100, NULL);
 
     switch (message)
     {
@@ -319,21 +318,17 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             player.UpdatePos_x(mouse.x);
             player.UpdatePos_y(mouse.y);
 
-            ball.UpdateAccel_x();
-            ball.UpdateAccel_y();
+        
 
             if (ball.CheckCollideRacket(&player))
             {
-                //COMMAND = RACKET_COLLIDE;
+                COMMAND = RACKET_COLLIDE;
             }
 
-            ball.CheckGoal(&player, &player2);
-            ball.CheckcollideCircuit();
+           
             InvalidateRgn(hWnd, NULL, FALSE);
             break;
-        case 2:
-            
-            break;
+      
         default:
             break;
         }
@@ -390,46 +385,18 @@ DWORD WINAPI Client(LPVOID arg)
         //update 이벤트 대기
         WaitForSingleObject(updateData, INFINITE);
 
-        snprintf(hbuf, sizeof(hbuf), "%d", P_POSITION);
+        snprintf(hbuf, sizeof(hbuf), "%d", COMMAND);
         retval = send(client_sock, hbuf, sizeof(int), 0);
 
         Point2D tbuf;
-        tbuf = ball.GetPos();
+        tbuf = player.GetPos();
         retval = send(client_sock, (char*)&tbuf, sizeof(Point2D), 0);
         if (retval == SOCKET_ERROR)
         err_display((char*)"send()");
 
-        //if (COMMAND == P_POSITION)
-        //{
-        //    snprintf(hbuf, sizeof(hbuf), "%d", P_POSITION);
-        //    retval = send(sock, hbuf, BUFSIZE, 0);
-
-        //    Point2D* temp;
-        //    Point2D tbuf;
-        //    //temp = player.GetPos();
-        //    tbuf.Position_x = 40;
-        //    //tbuf.Position_y = 40;
-        //    //temp = &tbuf;
-        //    //snprintf(buf, sizeof(buf), "%d %d", temp.Position_x, temp.Position_y);
-        //    //플레이어 위치 전송
-        //    retval = send(sock, (char*)tbuf.Position_x, sizeof(int), 0);
-        //    if (retval == SOCKET_ERROR)
-        //        err_display((char*)"send()");
-
-        //}
-        /*else if (COMMAND == RACKET_COLLIDE)
-        {
-            buf = player.GetPos();
-            A_buf = player.GetAccel();
-            retval = send(sock, (char*)&buf, sizeof(Point2D), 0);
-            if (retval == SOCKET_ERROR)
-                err_display((char*)"send()");
-            retval = send(sock, (char*)&A_buf, sizeof(Accel2D), 0);
-            if (retval == SOCKET_ERROR)
-                err_display((char*)"send()");
-        }*/
 
         //이벤트 활성화
+        COMMAND = P_POSITION;
         SetEvent(recvData);
 
     }
@@ -468,6 +435,14 @@ DWORD WINAPI Update(LPVOID arg)
 
         ball.UpdatePos_x(temp->Position_x);
         ball.UpdatePos_y(temp->Position_y);
+
+        retval = recvn(client_sock, buf, sizeof(Point2D), 0);
+        temp = (Point2D*)buf;
+
+        printf("2P - Position_X: %d, Position_Y: %d\n", temp->Position_x, temp->Position_y);
+
+        player2.UpdatePos_x(temp->Position_x);
+        player2.UpdatePos_y(temp->Position_y);
 
         SetEvent(updateData);
     }
