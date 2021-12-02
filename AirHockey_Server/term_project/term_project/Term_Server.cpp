@@ -32,11 +32,14 @@ int main() {
 	Connected1P = false;
 	Connected2P = false;
 
-	bPosition.position_x = 0;
-	bPosition.position_y = 0;
+	bPosition.position_x = 200;
+	bPosition.position_y = 400;
 
 	recvData = CreateEvent(nullptr, false, false, nullptr);
 	updateData = CreateEvent(nullptr, false, true, nullptr);
+
+	bAccel.accel_x = 10;
+	bAccel.accel_y = 10;
 
 	int retval;
 
@@ -320,12 +323,12 @@ DWORD WINAPI updateClient(LPVOID arg)
 
 		printf("헤더 전송 완료\n");
 
-		pPosition[0].position_x += 1;
-		pPosition[0].position_y += 1;
+		//공 업데이트
+		bPosition = updateBall(bAccel);
 
 		Point2D temp;
-		temp.position_x = pPosition[0].position_x;
-		temp.position_y = pPosition[0].position_y;
+		temp.position_x = bPosition.position_x;
+		temp.position_y = bPosition.position_y;
 
 		retval = send(client_sock1, (char*)&temp, sizeof(Point2D), 0);
 		if (retval == SOCKET_ERROR) {
@@ -419,23 +422,23 @@ Point2D updateBall(Accel2D Accel)
 {
 	Accel2D newAccel = Accel;
 
-	if (bPosition.position_x + BALLSIZE > 400)
+	if (bPosition.position_x + BALLSIZE > 400 && newAccel.accel_x > 0)
 	{
 		bPosition.position_x = 400 - BALLSIZE;
 		bAccel = circuitCollide(newAccel, XSIDE_COLLIDE);
 	}
-	else if (bPosition.position_x - BALLSIZE < 0)
+	else if (bPosition.position_x - BALLSIZE < 0 && newAccel.accel_x < 0)
 	{
 		bPosition.position_x = BALLSIZE;
 		bAccel = circuitCollide(newAccel, XSIDE_COLLIDE);
 	}
 
-	if (bPosition.position_y + BALLSIZE > 800)
+	if (bPosition.position_y + BALLSIZE > 800 && newAccel.accel_y > 0)
 	{
 		bPosition.position_y = 800 - BALLSIZE;
 		bAccel = circuitCollide(newAccel, YSIDE_COLLIDE);
 	}
-	else if (bPosition.position_y - BALLSIZE < 0)
+	else if (bPosition.position_y - BALLSIZE < 0 && newAccel.accel_y < 0)
 	{
 		bPosition.position_y = BALLSIZE;
 		bAccel = circuitCollide(newAccel, YSIDE_COLLIDE);

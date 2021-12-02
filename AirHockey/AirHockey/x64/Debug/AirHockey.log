@@ -1,9 +1,0 @@
-﻿  AirHockey.cpp
-D:\2102\NGP\TermProject\AirHockey\AirHockey\AirHockey\AirHockey.cpp(376,21): warning C4101: 'header' :참조되지 않은 지역 변수입니다.
-D:\2102\NGP\TermProject\AirHockey\AirHockey\AirHockey\AirHockey.cpp(379,10): warning C4101: 'buf' :참조되지 않은 지역 변수입니다.
-D:\2102\NGP\TermProject\AirHockey\AirHockey\AirHockey\AirHockey.cpp(376,9): warning C4101: 'id' :참조되지 않은 지역 변수입니다.
-D:\2102\NGP\TermProject\AirHockey\AirHockey\AirHockey\AirHockey.cpp(469,30): warning C4244: '인수': 'int'에서 'float'(으)로 변환하면서 데이터가 손실될 수 있습니다.
-D:\2102\NGP\TermProject\AirHockey\AirHockey\AirHockey\AirHockey.cpp(470,30): warning C4244: '인수': 'int'에서 'float'(으)로 변환하면서 데이터가 손실될 수 있습니다.
-D:\2102\NGP\TermProject\AirHockey\AirHockey\AirHockey\AirHockey.cpp(445,21): warning C4101: 'header' :참조되지 않은 지역 변수입니다.
-D:\2102\NGP\TermProject\AirHockey\AirHockey\AirHockey\AirHockey.cpp(445,9): warning C4101: 'id' :참조되지 않은 지역 변수입니다.
-  AirHockey.vcxproj -> D:\2102\NGP\TermProject\AirHockey\AirHockey\x64\Debug\AirHockey.exe
