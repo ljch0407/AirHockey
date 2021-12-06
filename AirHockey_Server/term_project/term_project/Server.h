@@ -18,11 +18,11 @@ struct ClientId {
 	int client_id;
 };
 
-//양 클라이언트를 묶은 구조체
-struct ClientInfo {
-	SOCKET client1;
-	SOCKET client2;
-};
+////양 클라이언트를 묶은 구조체
+//struct ClientInfo {
+//	SOCKET client1;
+//	SOCKET client2;
+//};
 
 //객체의 2차원 좌표
 struct Point2D {

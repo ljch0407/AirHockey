@@ -8,7 +8,9 @@
 #include <CommCtrl.h>
 #include "Server.h"
 
-ClientInfo* cInfo;
+//ClientInfo* p_cInfo;
+//ClientInfo cInfo;
+
 SOCKET client_sock1, client_sock2;
 
 Point2D pPosition[2];
@@ -24,7 +26,7 @@ bool Ractket;
 bool Game_end;
 bool Connected1P, Connected2P;
 
-HANDLE recvData, updateData;
+HANDLE recvData[2], updateData[2];
 
 int main() {
 
@@ -39,8 +41,10 @@ int main() {
 	pPosition[1].position_y = 700;
 
 
-	recvData = CreateEvent(nullptr, false, false, nullptr);
-	updateData = CreateEvent(nullptr, false, true, nullptr);
+	recvData[0] = CreateEvent(nullptr, false, false, nullptr);
+	recvData[1] = CreateEvent(nullptr, false, false, nullptr);
+	updateData[0] = CreateEvent(nullptr, false, true, nullptr);
+	updateData[1] = CreateEvent(nullptr, false, true, nullptr);
 
 	bAccel.accel_x = 10;
 	bAccel.accel_y = 10;
@@ -75,7 +79,7 @@ int main() {
 	int addrlen;
 	bool token = true;
 	HANDLE getClientThread[2];
-	HANDLE updateClientThread;
+	HANDLE updateClientThread[2];
 	ClientId cNum;	//id와 클라이언트 정보를 같이 관리할 구조체
 	//int id;					//클라이언트 id
 
@@ -101,6 +105,7 @@ int main() {
 
 			//클라이언트1의 데이터를 받는 스레드
 			getClientThread[0] = CreateThread(nullptr, 0, getClient, (LPVOID)cTemp, 0, nullptr);
+			updateClientThread[0] = CreateThread(nullptr, 0, updateClient, (LPVOID)cTemp, 0, nullptr);
 			printf("create client1 thread\n");
 			token = !token;
 		}
@@ -114,19 +119,21 @@ int main() {
 
 			//클라이언트2의 데이터를 받는 스레드
 			getClientThread[1] = CreateThread(nullptr, 0, getClient, (LPVOID)cTemp, 0, nullptr);
+			updateClientThread[1] = CreateThread(nullptr, 0, updateClient, (LPVOID)cTemp, 0, nullptr);
 			printf("create client2 thread\n");
 		}
 
-		while (1)
-		{
-			if (Game_Start)
-			{
-				//서버 업데이트 + 데이터 전송하는 스레드 -> Event처리를 통해 sendcommand()는 gc1,2의 종료를 기다림 
-				updateClientThread = CreateThread(nullptr, 0, updateClient, (LPVOID)cInfo, 0, nullptr);
-				Game_Start = false;
-				break;
-			}
-		}
+		//while (1)
+		//{
+		//	if (Game_Start)
+		//	{
+		//		//서버 업데이트 + 데이터 전송하는 스레드 -> Event처리를 통해 sendcommand()는 gc1,2의 종료를 기다림 
+		//		updateClientThread = CreateThread(nullptr, 0, updateClient, (LPVOID)p_cInfo, 0, nullptr);
+		//		Game_Start = false;
+		//		break;
+		//	}
+		//}
+
 	}
 
 	//closesocket()
@@ -136,8 +143,10 @@ int main() {
 	WSACleanup();
 
 	//이벤트 제거
-	CloseHandle(recvData);
-	CloseHandle(updateData);
+	CloseHandle(recvData[0]);
+	CloseHandle(updateData[0]);
+	CloseHandle(recvData[1]);
+	CloseHandle(updateData[1]);
 
 	return 0;
 }
@@ -151,41 +160,38 @@ DWORD WINAPI getClient(LPVOID arg)
 	char buf[BUFSIZE];
 	ClientId* argInfo;
 
-	//event생성
-
 	//클라이언트 번호 처리(각 클라이언트 정보 구분)
 	argInfo = (ClientId*)arg;
 	id = argInfo->client_id;
 
 	//클라이언트 처리
-	ClientInfo cInfoTemp;
 
 	if (id == 0)
 	{
 		client_sock1 = argInfo->client_sock;
 		
-		cInfoTemp.client1 = client_sock1;
+		//cInfo.client1 = client_sock1;
 		Connected1P = true;
 		printf("Client1 Connected\n");
 	}
 	else
 	{
 		client_sock2 = argInfo->client_sock;
-		cInfoTemp.client2 = client_sock2;
+		//cInfo.client2 = client_sock2;
 		Connected2P = true;
-		printf("Client1 Connected\n");
+		printf("Client2 Connected\n");
 	}
 
-	while (1)
-	{
-		printf("check multi-connected\n");
-		if (checkAllConnected())
-		{
-			if (id == 0)
-				cInfo = &cInfoTemp;
-			break;
-		}
-	}
+	//while (1)
+	//{
+	//	
+	//	if (checkAllConnected())
+	//	{
+	//		if (id == 0)
+	//			p_cInfo = &cInfo;
+	//		break;
+	//	}
+	//}
 	
 	//getpeername
 	addrLen = sizeof(clientAddr);
@@ -198,7 +204,11 @@ DWORD WINAPI getClient(LPVOID arg)
 		//declare additional-needed data
 
 		//update 이벤트 대기
-		WaitForSingleObject(updateData, INFINITE);
+		if (id == 0)
+			WaitForSingleObject(updateData[0], INFINITE);
+		else
+			WaitForSingleObject(updateData[1], INFINITE);
+		//WaitForMultipleObjects(2, updateData, true, INFINITE);
 
 		//헤더 데이터 수신
 		//recvCommand(header);
@@ -236,7 +246,7 @@ DWORD WINAPI getClient(LPVOID arg)
 			{
 				pPosition[1].position_x = temp->position_x;
 				pPosition[1].position_y = temp->position_y;
-				printf("[TCP 클라이언트2 수신 정보] pPosition.x : %d, pPosition.y : %d\n", pPosition[0].position_x, pPosition[0].position_y);
+				printf("[TCP 클라이언트2 수신 정보] pPosition.x : %d, pPosition.y : %d\n", pPosition[1].position_x, pPosition[1].position_y);
 			}
 			break;
 		//case RACKET_COLLIDE:
@@ -287,7 +297,10 @@ DWORD WINAPI getClient(LPVOID arg)
 		}
 
 		//이벤트 활성화
-		SetEvent(recvData);
+		if (id == 0)
+			SetEvent(recvData[0]);
+		else
+			SetEvent(recvData[1]);
 
 		//자료 업데이트(의미 없으면 안해도 됨)
 		//update player position -> for 2
@@ -303,29 +316,25 @@ DWORD WINAPI updateClient(LPVOID arg)
 {
 	printf("update 실행\n");
 
-	//클라이언트 번호 처리(각 클라이언트 정보 구분)
-
-	ClientInfo* tempinfo;
-	tempinfo = (ClientInfo*)arg;
-
-	SOCKADDR_IN clientAddr1;
-	SOCKADDR_IN clientAddr2;
-	int addrLen1, addrLen2;
-	SOCKET c_sock1;
-	SOCKET c_sock2;
-	int retval;
+	int id, retval, header;
+	SOCKADDR_IN clientAddr;
+	int addrLen;
 	char buf[BUFSIZE];
+	ClientId* argInfo;
 
-	c_sock1 = tempinfo->client1;
-	c_sock2 = tempinfo->client2;
+	//클라이언트 번호 처리(각 클라이언트 정보 구분)
+	argInfo = (ClientId*)arg;
+	id = argInfo->client_id;
+
+	//ClientInfo* tempinfo;
+	//tempinfo = (ClientInfo*)arg;
 
 	//getpeername
-	addrLen1 = sizeof(clientAddr1);
-	getpeername(c_sock1, (SOCKADDR*)&clientAddr1, &addrLen1);
+	addrLen = sizeof(clientAddr);
+	getpeername(argInfo->client_sock, (SOCKADDR*)&clientAddr, &addrLen);
 	
-	//server update
-	addrLen2 = sizeof(clientAddr2);
-	getpeername(c_sock2, (SOCKADDR*)&clientAddr2, &addrLen2);
+	//addrLen2 = sizeof(clientAddr2);
+	//getpeername(c_sock2, (SOCKADDR*)&clientAddr2, &addrLen2);
 
 	//sendCommand()
 	printf("data 송신 시작\n");
@@ -333,20 +342,24 @@ DWORD WINAPI updateClient(LPVOID arg)
 	while (1)
 	{
 		//getclient 종료 대기
-		WaitForSingleObject(recvData, INFINITE);
+		if (id == 0)
+			WaitForSingleObject(recvData[0], INFINITE);
+		else
+			WaitForSingleObject(recvData[1], INFINITE);
+		//WaitForMultipleObjects(2, recvData, true, INFINITE);
 
 		//헤더 파일 전송
 		snprintf(buf, sizeof(buf), "%d", B_POSITION);
 
-		retval = send(c_sock1, buf, sizeof(int), 0);
+		retval = send(argInfo->client_sock, buf, sizeof(int), 0);
 		if (retval == SOCKET_ERROR) {
 			err_display("send()");
 		}
 
-		retval = send(c_sock2, buf, sizeof(int), 0);
-		if (retval == SOCKET_ERROR) {
-			err_display("send()");
-		}
+		//retval = send(c_sock2, buf, sizeof(int), 0);
+		//if (retval == SOCKET_ERROR) {
+		//	err_display("send()");
+		//}
 
 		printf("헤더 전송 완료\n");
 
@@ -360,42 +373,60 @@ DWORD WINAPI updateClient(LPVOID arg)
 		temp.position_y = bPosition.position_y;
 
 		//공 데이터 전송
-		retval = send(c_sock1, (char*)&temp, sizeof(Point2D), 0);
+		retval = send(argInfo->client_sock, (char*)&temp, sizeof(Point2D), 0);
 		if (retval == SOCKET_ERROR) {
 			err_display("send()");
 		}
 
-		retval = send(c_sock2, (char*)&temp, sizeof(Point2D), 0);
-		if (retval == SOCKET_ERROR) {
-			err_display("send()");
-		}
+		//retval = send(c_sock2, (char*)&temp, sizeof(Point2D), 0);
+		//if (retval == SOCKET_ERROR) {
+		//	err_display("send()");
+		//}
 
 		printf("공 데이터 전송 완료: position_x: %d, position_y: %d\n", temp.position_x, temp.position_y);
 
 
 		//플레이어 데이터 전송
-		temp.position_x = pPosition[1].position_x;
-		temp.position_y = pPosition[1].position_y;
+		if (id == 0)
+		{
+			temp.position_x = pPosition[1].position_x;
+			temp.position_y = pPosition[1].position_y;
 
-		retval = send(c_sock1, (char*)&temp, sizeof(Point2D), 0);
-		if (retval == SOCKET_ERROR) {
-			err_display("send()");
+			retval = send(argInfo->client_sock, (char*)&temp, sizeof(Point2D), 0);
+			if (retval == SOCKET_ERROR) {
+				err_display("send()");
+			}
+
+			printf("플레이어2 데이터 전송 완료: position_x: %d, position_y: %d\n", temp.position_x, temp.position_y);
 		}
+		else
+		{
+			temp.position_x = pPosition[0].position_x;
+			temp.position_y = pPosition[0].position_y;
 
-		printf("플레이어2 데이터 전송 완료: position_x: %d, position_y: %d\n", temp.position_x, temp.position_y);
+			retval = send(argInfo->client_sock, (char*)&temp, sizeof(Point2D), 0);
+			if (retval == SOCKET_ERROR) {
+				err_display("send()");
+			}
 
-		temp.position_x = pPosition[0].position_x;
-		temp.position_y = pPosition[0].position_y;
-
-		retval = send(c_sock2, (char*)&temp, sizeof(Point2D), 0);
-		if (retval == SOCKET_ERROR) {
-			err_display("send()");
+			printf("플레이어1 데이터 전송 완료: position_x: %d, position_y: %d\n", temp.position_x, temp.position_y);
 		}
+		
+		//temp.position_x = pPosition[0].position_x;
+		//temp.position_y = pPosition[0].position_y;
 
-		printf("플레이어1 데이터 전송 완료: position_x: %d, position_y: %d\n", temp.position_x, temp.position_y);
+		//retval = send(c_sock2, (char*)&temp, sizeof(Point2D), 0);
+		//if (retval == SOCKET_ERROR) {
+		//	err_display("send()");
+		//}
+
+		//printf("플레이어1 데이터 전송 완료: position_x: %d, position_y: %d\n", temp.position_x, temp.position_y);
 
 		//event활성화
-		SetEvent(updateData);
+		if (id == 0)
+			SetEvent(updateData[0]);
+		else
+			SetEvent(updateData[1]);
 	}
 
 	//if (Allconnected)
