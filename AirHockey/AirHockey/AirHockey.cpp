@@ -279,8 +279,6 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
-
-  
     SetTimer(hWnd, 1, 100, NULL);
 
     switch (message)
@@ -302,7 +300,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             }
         }
         break;
-   
 
     case WM_PAINT:
     {
@@ -318,10 +315,57 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             SolidBrush whitebursh(Color(255, 255, 255, 255));
             memdc.FillRectangle(&whitebursh, 0, 0, 400, 800);
             memdc2.FillRectangle(&whitebursh, 0, 0, 400, 800);
-
-            Image* image = Image::FromFile(L"image/table1.png");
-            memdc2.DrawImage(image, 0, 0);
            
+            //테이블 이미지 2번으로 사용.
+            Image* image = Image::FromFile(L"image/table2.png");
+            memdc2.DrawImage(image, 0, 0);
+
+            if (player2.GetScore() == 0)
+                image = Image::FromFile(L"image/score/enemy_score0.png");
+
+            else if (player2.GetScore() == 1)
+                image = Image::FromFile(L"image/score/enemy_score1.png");
+            else if (player2.GetScore() == 2)
+                image = Image::FromFile(L"image/score/enemy_score2.png");
+            else if (player2.GetScore() == 3)
+                image = Image::FromFile(L"image/score/enemy_score3.png");
+            else if (player2.GetScore() == 4)
+                image = Image::FromFile(L"image/score/enemy_score4.png");
+            else if (player2.GetScore() == 5)
+                image = Image::FromFile(L"image/score/enemy_score5.png");
+            else if (player2.GetScore() == 6)
+                image = Image::FromFile(L"image/score/enemy_score6.png");
+            else if (player2.GetScore() == 7)
+                image = Image::FromFile(L"image/score/enemy_score7.png");
+            else if (player2.GetScore() == 8)
+                image = Image::FromFile(L"image/score/enemy_score8.png");
+            else if (player2.GetScore() == 9)
+                image = Image::FromFile(L"image/score/enemy_score9.png");
+            memdc2.DrawImage(image, 100, 200);
+
+            if (player.GetScore() == 0)
+                image = Image::FromFile(L"image/score/my_score0.png");
+            else if (player.GetScore() == 1)
+                image = Image::FromFile(L"image/score/my_score1.png");
+            else if (player.GetScore() == 2)
+                image = Image::FromFile(L"image/score/my_score2.png");
+            else if (player.GetScore() == 3)
+                image = Image::FromFile(L"image/score/my_score3.png");
+            else if (player.GetScore() == 4)
+                image = Image::FromFile(L"image/score/my_score4.png");
+            else if (player.GetScore() == 5)
+                image = Image::FromFile(L"image/score/my_score5.png");
+            else if (player.GetScore() == 6)
+                image = Image::FromFile(L"image/score/my_score6.png");
+            else if (player.GetScore() == 7)
+                image = Image::FromFile(L"image/score/my_score7.png");
+            else if (player.GetScore() == 8)
+                image = Image::FromFile(L"image/score/my_score8.png");
+            else if (player.GetScore() == 9)
+                image = Image::FromFile(L"image/score/my_score9.png");
+
+            memdc2.DrawImage(image, 100, 600);
+
             image = Image::FromFile(L"image/ball.png");
             memdc2.DrawImage(image, ball.GetPos().Position_x - Player_R, ball.GetPos().Position_y+ Player_R);
             
@@ -350,14 +394,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             player.UpdatePos_x(mouse.x);
             player.UpdatePos_y(mouse.y);
 
-        
-
             if (ball.CheckCollideRacket(&player))
-            {
                 COMMAND = RACKET_COLLIDE;
-            }
 
-           
             InvalidateRgn(hWnd, NULL, FALSE);
             break;
       
