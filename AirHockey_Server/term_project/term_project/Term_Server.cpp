@@ -8,9 +8,6 @@
 #include <CommCtrl.h>
 #include "Server.h"
 
-//ClientInfo* p_cInfo;
-//ClientInfo cInfo;
-
 SOCKET client_sock1, client_sock2;
 
 Point2D pPosition[2];
@@ -25,6 +22,7 @@ bool Game_Start;
 bool Ractket;
 bool Game_end;
 bool Connected1P, Connected2P;
+bool P1Goal, P2Goal;
 
 HANDLE recvData[2], updateData[2];
 
@@ -46,8 +44,8 @@ int main() {
 	updateData[0] = CreateEvent(nullptr, false, true, nullptr);
 	updateData[1] = CreateEvent(nullptr, false, true, nullptr);
 
-	bAccel.accel_x = 10;
-	bAccel.accel_y = 10;
+	bAccel.accel_x = 1;
+	bAccel.accel_y = 1;
 
 	int retval;
 
@@ -80,8 +78,7 @@ int main() {
 	bool token = true;
 	HANDLE getClientThread[2];
 	HANDLE updateClientThread[2];
-	ClientId cNum;	//id와 클라이언트 정보를 같이 관리할 구조체
-	//int id;					//클라이언트 id
+	ClientId cNum, cNum2;	//id와 클라이언트 정보를 같이 관리할 구조체
 
 	while (1)
 	{
@@ -106,33 +103,20 @@ int main() {
 			//클라이언트1의 데이터를 받는 스레드
 			getClientThread[0] = CreateThread(nullptr, 0, getClient, (LPVOID)cTemp, 0, nullptr);
 			updateClientThread[0] = CreateThread(nullptr, 0, updateClient, (LPVOID)cTemp, 0, nullptr);
-			printf("create client1 thread\n");
 			token = !token;
 		}
 		else
 		{
-			cNum.client_id = 1;
-			cNum.client_sock = client_sock;
+			cNum2.client_id = 1;
+			cNum2.client_sock = client_sock;
 
 			ClientId* cTemp;
-			cTemp = &cNum;
+			cTemp = &cNum2;
 
 			//클라이언트2의 데이터를 받는 스레드
 			getClientThread[1] = CreateThread(nullptr, 0, getClient, (LPVOID)cTemp, 0, nullptr);
 			updateClientThread[1] = CreateThread(nullptr, 0, updateClient, (LPVOID)cTemp, 0, nullptr);
-			printf("create client2 thread\n");
 		}
-
-		//while (1)
-		//{
-		//	if (Game_Start)
-		//	{
-		//		//서버 업데이트 + 데이터 전송하는 스레드 -> Event처리를 통해 sendcommand()는 gc1,2의 종료를 기다림 
-		//		updateClientThread = CreateThread(nullptr, 0, updateClient, (LPVOID)p_cInfo, 0, nullptr);
-		//		Game_Start = false;
-		//		break;
-		//	}
-		//}
 
 	}
 
@@ -170,29 +154,17 @@ DWORD WINAPI getClient(LPVOID arg)
 	{
 		client_sock1 = argInfo->client_sock;
 		
-		//cInfo.client1 = client_sock1;
 		Connected1P = true;
 		printf("Client1 Connected\n");
 	}
 	else
 	{
 		client_sock2 = argInfo->client_sock;
-		//cInfo.client2 = client_sock2;
+
 		Connected2P = true;
 		printf("Client2 Connected\n");
 	}
 
-	//while (1)
-	//{
-	//	
-	//	if (checkAllConnected())
-	//	{
-	//		if (id == 0)
-	//			p_cInfo = &cInfo;
-	//		break;
-	//	}
-	//}
-	
 	//getpeername
 	addrLen = sizeof(clientAddr);
 	getpeername(argInfo->client_sock, (SOCKADDR*)&clientAddr, &addrLen);
@@ -208,7 +180,7 @@ DWORD WINAPI getClient(LPVOID arg)
 			WaitForSingleObject(updateData[0], INFINITE);
 		else
 			WaitForSingleObject(updateData[1], INFINITE);
-		//WaitForMultipleObjects(2, updateData, true, INFINITE);
+
 
 		//헤더 데이터 수신
 		//recvCommand(header);
@@ -218,46 +190,74 @@ DWORD WINAPI getClient(LPVOID arg)
 		}
 		
 		header = atoi(buf);
-		printf("헤더 수신 완료: %d\n", header);
+		if (id == 0)
+			printf("[TCP 클라이언트1] 헤더 수신 완료: %d\n", header);
+		else
+			printf("[TCP 클라이언트2] 헤더 수신 완료: %d\n", header);
 
+		//포지션 데이터 수신
+		//position data recv
+		retval = recvn(argInfo->client_sock, buf, sizeof(Point2D), 0);
+		if (retval == SOCKET_ERROR) {
+			err_display("recv()");
+		}
+			
+		Point2D* temp;
+		temp = (Point2D*)buf;
+
+		if (id == 0)
+		{
+			pPosition[0].position_x = temp->position_x;
+			pPosition[0].position_y = temp->position_y;
+			printf("[TCP 클라이언트1 수신 정보] pPosition.x : %d, pPosition.y : %d\n", pPosition[0].position_x, pPosition[0].position_y);
+		}
+		else
+		{
+			pPosition[1].position_x = temp->position_x;
+			pPosition[1].position_y = temp->position_y;
+			printf("[TCP 클라이언트2 수신 정보] pPosition.x : %d, pPosition.y : %d\n", pPosition[1].position_x, pPosition[1].position_y);
+
+		}
 		//헤더별 분기
 		//header switch
-		header = atoi(buf);
-		switch (header)
-		{
-		case P_POSITION:
-			//포지션 데이터 수신
-			//position data recv
-			retval = recvn(argInfo->client_sock, buf, sizeof(Point2D), 0);
-			if (retval == SOCKET_ERROR) {
-				err_display("recv()");
-			}
-			
-			Point2D* temp;
-			temp = (Point2D*)buf;
-
-			if (id == 0)
-			{
-				pPosition[0].position_x = temp->position_x;
-				pPosition[0].position_y = temp->position_y;
-				printf("[TCP 클라이언트1 수신 정보] pPosition.x : %d, pPosition.y : %d\n", pPosition[0].position_x, pPosition[0].position_y);
-			}
-			else
-			{
-				pPosition[1].position_x = temp->position_x;
-				pPosition[1].position_y = temp->position_y;
-				printf("[TCP 클라이언트2 수신 정보] pPosition.x : %d, pPosition.y : %d\n", pPosition[1].position_x, pPosition[1].position_y);
-			}
-			break;
-		//case RACKET_COLLIDE:
-		//	//충돌 데이터 수신(Position, Accel, Angle)
+		//header = atoi(buf);
+		//switch (header)
+		//{
+		//case P_POSITION:
 		//	//포지션 데이터 수신
-		//	retval = recv(argInfo->client_sock, buf, BUFSIZE, 0);
+		//	//position data recv
+		//	retval = recvn(argInfo->client_sock, buf, sizeof(Point2D), 0);
 		//	if (retval == SOCKET_ERROR) {
 		//		err_display("recv()");
 		//	}
-		//	Point2D* temp3;
+		//	
+		//	Point2D* temp;
 		//	temp = (Point2D*)buf;
+
+		//	if (id == 0)
+		//	{
+		//		pPosition[0].position_x = temp->position_x;
+		//		pPosition[0].position_y = temp->position_y;
+		//		printf("[TCP 클라이언트1 수신 정보] pPosition.x : %d, pPosition.y : %d\n", pPosition[0].position_x, pPosition[0].position_y);
+		//	}
+		//	else
+		//	{
+		//		pPosition[1].position_x = temp->position_x;
+		//		pPosition[1].position_y = temp->position_y;
+		//		printf("[TCP 클라이언트2 수신 정보] pPosition.x : %d, pPosition.y : %d\n", pPosition[1].position_x, pPosition[1].position_y);
+		//	}
+		//	break;
+		//case RACKET_COLLIDE:
+		//	//충돌 데이터 수신(Position, Accel, Angle)
+		//	//포지션 데이터 수신
+		//	retval = recv(argInfo->client_sock, buf, sizeof(Point2D), 0);
+		//	if (retval == SOCKET_ERROR) {
+		//		err_display("recv()");
+		//	}
+
+		//	Point2D* temp3;
+		//	temp3 = (Point2D*)buf;
+
 		//	if (id == 0)
 		//	{
 		//		pPosition[0].position_x = temp3->position_x;
@@ -293,8 +293,8 @@ DWORD WINAPI getClient(LPVOID arg)
 		//	}
 		//	collideAngel = atoi(buf);
 		//	*///추가 -> 이거 3개를 충돌 구조체로 묶어서 한번에 송/수신하는 방법은 어떨까?
-		//	break;
-		}
+			//break;
+		//}
 
 		//이벤트 활성화
 		if (id == 0)
@@ -321,21 +321,16 @@ DWORD WINAPI updateClient(LPVOID arg)
 	int addrLen;
 	char buf[BUFSIZE];
 	ClientId* argInfo;
+	ClientId a;
 
 	//클라이언트 번호 처리(각 클라이언트 정보 구분)
 	argInfo = (ClientId*)arg;
 	id = argInfo->client_id;
 
-	//ClientInfo* tempinfo;
-	//tempinfo = (ClientInfo*)arg;
-
 	//getpeername
 	addrLen = sizeof(clientAddr);
 	getpeername(argInfo->client_sock, (SOCKADDR*)&clientAddr, &addrLen);
 	
-	//addrLen2 = sizeof(clientAddr2);
-	//getpeername(c_sock2, (SOCKADDR*)&clientAddr2, &addrLen2);
-
 	//sendCommand()
 	printf("data 송신 시작\n");
 
@@ -346,7 +341,18 @@ DWORD WINAPI updateClient(LPVOID arg)
 			WaitForSingleObject(recvData[0], INFINITE);
 		else
 			WaitForSingleObject(recvData[1], INFINITE);
-		//WaitForMultipleObjects(2, recvData, true, INFINITE);
+
+
+		//업데이트
+		if (id == 0)
+		{
+			bPosition = updateBall(bAccel);
+			//pPosition[1].position_x += 1;
+			//pPosition[1].position_y -= 1;
+
+			//checkGoal();
+
+		}
 
 		//헤더 파일 전송
 		snprintf(buf, sizeof(buf), "%d", B_POSITION);
@@ -356,17 +362,7 @@ DWORD WINAPI updateClient(LPVOID arg)
 			err_display("send()");
 		}
 
-		//retval = send(c_sock2, buf, sizeof(int), 0);
-		//if (retval == SOCKET_ERROR) {
-		//	err_display("send()");
-		//}
-
-		printf("헤더 전송 완료\n");
-
-		//업데이트
-		bPosition = updateBall(bAccel);
-		pPosition[1].position_x += 1;
-		pPosition[1].position_y -= 1;
+		//printf("헤더 전송 완료\n");
 
 		Point2D temp;
 		temp.position_x = bPosition.position_x;
@@ -378,12 +374,7 @@ DWORD WINAPI updateClient(LPVOID arg)
 			err_display("send()");
 		}
 
-		//retval = send(c_sock2, (char*)&temp, sizeof(Point2D), 0);
-		//if (retval == SOCKET_ERROR) {
-		//	err_display("send()");
-		//}
-
-		printf("공 데이터 전송 완료: position_x: %d, position_y: %d\n", temp.position_x, temp.position_y);
+		//printf("공 데이터 전송 완료: position_x: %d, position_y: %d\n", temp.position_x, temp.position_y);
 
 
 		//플레이어 데이터 전송
@@ -397,7 +388,7 @@ DWORD WINAPI updateClient(LPVOID arg)
 				err_display("send()");
 			}
 
-			printf("플레이어2 데이터 전송 완료: position_x: %d, position_y: %d\n", temp.position_x, temp.position_y);
+			//printf("플레이어2 데이터 전송 완료: position_x: %d, position_y: %d\n", temp.position_x, temp.position_y);
 		}
 		else
 		{
@@ -409,19 +400,9 @@ DWORD WINAPI updateClient(LPVOID arg)
 				err_display("send()");
 			}
 
-			printf("플레이어1 데이터 전송 완료: position_x: %d, position_y: %d\n", temp.position_x, temp.position_y);
+			//printf("플레이어1 데이터 전송 완료: position_x: %d, position_y: %d\n", temp.position_x, temp.position_y);
 		}
 		
-		//temp.position_x = pPosition[0].position_x;
-		//temp.position_y = pPosition[0].position_y;
-
-		//retval = send(c_sock2, (char*)&temp, sizeof(Point2D), 0);
-		//if (retval == SOCKET_ERROR) {
-		//	err_display("send()");
-		//}
-
-		//printf("플레이어1 데이터 전송 완료: position_x: %d, position_y: %d\n", temp.position_x, temp.position_y);
-
 		//event활성화
 		if (id == 0)
 			SetEvent(updateData[0]);
@@ -429,9 +410,6 @@ DWORD WINAPI updateClient(LPVOID arg)
 			SetEvent(updateData[1]);
 	}
 
-	//if (Allconnected)
-		//send All-Connected
-	
 	//if (!checkMoveBall())
 		//send STRIKE-Effect
 
@@ -440,19 +418,6 @@ DWORD WINAPI updateClient(LPVOID arg)
 
 
 }
-
-void recvCommand(SOCKET* client_sock)
-{
-}
-
-
-//void recvIP(SOCKADDR* clientAddr, int id)	//(SOCKADDR *)로 형변환해서 인자로 넘겨야 하나?
-//{
-//	//접속한 클라이언트의 정보 출력
-//	//DisplayText("[TCP 서버] 클라이언트 접속: IP 주소 = %s, 포트 번호 = %d\r\n", inet_ntoa(clientaddr.sin_addr), ntohs(clientaddr.sin_port));
-//	//if (id == 0)
-//	//	clientAddr[0] = inet_ntoa(clientAddr)
-//}
 
 //플레이어가 모두 연결되었다면 GameStart 변수를 클라에게 전송
 bool checkAllConnected()
@@ -488,8 +453,8 @@ void resetBall()
 //공의 위치가 Goal라인을 넘었는지 체크
 void checkGoal()
 {
-	bool P1Goal = false;
-	bool P2Goal = false;
+	P1Goal = false;
+	P2Goal = false;
 
 	//check goal line
 	if (bPosition.position_x >= 170 && bPosition.position_y <= 230)
@@ -497,6 +462,7 @@ void checkGoal()
 		if (bPosition.position_y >= 0 && bPosition.position_y <= 50)
 		{
 			resetBall();
+			P2Goal = true;
 			if (score / 10 == 9)
 				score = 100;
 			else score += 10;
@@ -504,6 +470,7 @@ void checkGoal()
 		else if (bPosition.position_y >= 750 && bPosition.position_y < 800)
 		{
 			resetBall();
+			P1Goal = true;
 			if (score % 10 == 9)
 				score = 100;
 			else score += 1;
