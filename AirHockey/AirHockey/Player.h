@@ -7,7 +7,7 @@ private:
     Point2D m_Position;
     Accel2D m_Accel;
     int m_Goal;
-
+    int m_score;
 public:
     Player();
 
@@ -19,4 +19,5 @@ public:
     void UpdatePos_x(int pos);
     void UpdatePos_y(int pos);
     void Goal(void);
+    int GetScore(void);
 };

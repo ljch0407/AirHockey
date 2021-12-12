@@ -39,6 +39,38 @@ HWND hEdit, hEdit1, hEdit2;
 SOCKET sock;
 int COMMAND = P_POSITION;
 
+int Poschangex(int x)
+{
+    int temp = 0;
+    if (x >= 200)
+    {
+        temp = x - 200;
+        x = x - temp * 2;
+    }
+    else if (x < 200)
+    {
+        temp = 200 - x;
+        x = x + temp * 2;
+    }
+    return x;
+}
+
+int Poschangey(int y)
+{
+    int temp = 0;
+    if (y >= 400)
+    {
+        temp = y - 400;
+        y = y - temp * 2;
+    }
+    else if (y < 400)
+    {
+        temp = 400 - y;
+        y = y + temp * 2;
+    }
+    return y;
+}
+
 void DisPlayText(char* fmt, ...)
 {
     va_list arg;
@@ -95,9 +127,9 @@ int recvn(SOCKET s, char* buf, int len, int flags)
 }
 
 int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
-                     _In_opt_ HINSTANCE hPrevInstance,
-                     _In_ LPWSTR    lpCmdLine,
-                     _In_ int       nCmdShow)
+    _In_opt_ HINSTANCE hPrevInstance,
+    _In_ LPWSTR    lpCmdLine,
+    _In_ int       nCmdShow)
 {
     UNREFERENCED_PARAMETER(hPrevInstance);
     UNREFERENCED_PARAMETER(lpCmdLine);
@@ -126,16 +158,16 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
     ULONG_PTR gdiplusToken;
     GdiplusStartupInput gdiplusStartupInput;
-    if(GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, NULL)!=Ok)
+    if (GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, NULL) != Ok)
         return 0;
 
     // 애플리케이션 초기화를 수행합니다:
-    if (!InitInstance (hInstance, nCmdShow))
+    if (!InitInstance(hInstance, nCmdShow))
     {
         return FALSE;
     }
 
-    
+
     HACCEL hAccelTable = LoadAccelerators(hInstance, MAKEINTRESOURCE(IDC_AIRHOCKEY));
 
     //네트워크 연결 설정
@@ -175,7 +207,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     }
 
     GdiplusShutdown(gdiplusToken);
-    return (int) msg.wParam;
+    return (int)msg.wParam;
 }
 
 
@@ -190,17 +222,17 @@ ATOM MyRegisterClass(HINSTANCE hInstance)
 
     wcex.cbSize = sizeof(WNDCLASSEX);
 
-    wcex.style          = CS_HREDRAW | CS_VREDRAW;
-    wcex.lpfnWndProc    = WndProc;
-    wcex.cbClsExtra     = 0;
-    wcex.cbWndExtra     = 0;
-    wcex.hInstance      = hInstance;
-    wcex.hIcon          = LoadIcon(hInstance, MAKEINTRESOURCE(IDI_AIRHOCKEY));
-    wcex.hCursor        = LoadCursor(nullptr, IDC_ARROW);
-    wcex.hbrBackground  = (HBRUSH)(COLOR_WINDOW+1);
-    wcex.lpszMenuName   = MAKEINTRESOURCEW(IDC_AIRHOCKEY);
-    wcex.lpszClassName  = szWindowClass;
-    wcex.hIconSm        = LoadIcon(wcex.hInstance, MAKEINTRESOURCE(IDI_SMALL));
+    wcex.style = CS_HREDRAW | CS_VREDRAW;
+    wcex.lpfnWndProc = WndProc;
+    wcex.cbClsExtra = 0;
+    wcex.cbWndExtra = 0;
+    wcex.hInstance = hInstance;
+    wcex.hIcon = LoadIcon(hInstance, MAKEINTRESOURCE(IDI_AIRHOCKEY));
+    wcex.hCursor = LoadCursor(nullptr, IDC_ARROW);
+    wcex.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
+    wcex.lpszMenuName = MAKEINTRESOURCEW(IDC_AIRHOCKEY);
+    wcex.lpszClassName = szWindowClass;
+    wcex.hIconSm = LoadIcon(wcex.hInstance, MAKEINTRESOURCE(IDI_SMALL));
 
     return RegisterClassExW(&wcex);
 }
@@ -217,20 +249,20 @@ ATOM MyRegisterClass(HINSTANCE hInstance)
 //
 BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 {
-   hInst = hInstance; // 인스턴스 핸들을 전역 변수에 저장합니다.
+    hInst = hInstance; // 인스턴스 핸들을 전역 변수에 저장합니다.
 
-   HWND hWnd = CreateWindowW(szWindowClass, szTitle, WS_OVERLAPPEDWINDOW,
-      CW_USEDEFAULT, 0, 400, 800, nullptr, nullptr, hInstance, nullptr);
+    HWND hWnd = CreateWindowW(szWindowClass, szTitle, WS_OVERLAPPEDWINDOW,
+        CW_USEDEFAULT, 0, 400, 800, nullptr, nullptr, hInstance, nullptr);
 
-   if (!hWnd)
-   {
-      return FALSE;
-   }
+    if (!hWnd)
+    {
+        return FALSE;
+    }
 
-   ShowWindow(hWnd, nCmdShow);
-   UpdateWindow(hWnd);
+    ShowWindow(hWnd, nCmdShow);
+    UpdateWindow(hWnd);
 
-   return TRUE;
+    return TRUE;
 }
 
 
@@ -247,67 +279,111 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
-
-  
     SetTimer(hWnd, 1, 100, NULL);
 
     switch (message)
     {
     case WM_COMMAND:
+    {
+        int wmId = LOWORD(wParam);
+        // 메뉴 선택을 구문 분석합니다:
+        switch (wmId)
         {
-            int wmId = LOWORD(wParam);
-            // 메뉴 선택을 구문 분석합니다:
-            switch (wmId)
-            {
-            case IDM_ABOUT:
-                DialogBox(hInst, MAKEINTRESOURCE(IDD_ABOUTBOX), hWnd, About);
-                break;
-            case IDM_EXIT:
-                DestroyWindow(hWnd);
-                break;
-            default:
-                return DefWindowProc(hWnd, message, wParam, lParam);
-            }
+        case IDM_ABOUT:
+            DialogBox(hInst, MAKEINTRESOURCE(IDD_ABOUTBOX), hWnd, About);
+            break;
+        case IDM_EXIT:
+            DestroyWindow(hWnd);
+            break;
+        default:
+            return DefWindowProc(hWnd, message, wParam, lParam);
         }
-        break;
-   
+    }
+    break;
 
     case WM_PAINT:
     {
-            PAINTSTRUCT ps;
+        PAINTSTRUCT ps;
 
-            hdc = BeginPaint(hWnd, &ps);
+        hdc = BeginPaint(hWnd, &ps);
 
-            Bitmap bitmap1(400, 800);
-            Bitmap bitmap2(400, 800);
-            Graphics* g = new Graphics(hdc);
-            Graphics memdc(&bitmap1);
-            Graphics memdc2(&bitmap2);
-            SolidBrush whitebursh(Color(255, 255, 255, 255));
-            memdc.FillRectangle(&whitebursh, 0, 0, 400, 800);
-            memdc2.FillRectangle(&whitebursh, 0, 0, 400, 800);
+        Bitmap bitmap1(400, 800);
+        Bitmap bitmap2(400, 800);
+        Graphics* g = new Graphics(hdc);
+        Graphics memdc(&bitmap1);
+        Graphics memdc2(&bitmap2);
+        SolidBrush whitebursh(Color(255, 255, 255, 255));
+        memdc.FillRectangle(&whitebursh, 0, 0, 400, 800);
+        memdc2.FillRectangle(&whitebursh, 0, 0, 400, 800);
 
-            Image* image = Image::FromFile(L"image/table1.png");
-            memdc2.DrawImage(image, 0, 0);
-           
-            image = Image::FromFile(L"image/ball.png");
-            memdc2.DrawImage(image, ball.GetPos().Position_x - Player_R, ball.GetPos().Position_y+ Player_R);
-            
-            image = Image::FromFile(L"image/enemy_racket.png");
-            memdc2.DrawImage(image, player2.GetPos().Position_x - Player_R, player2.GetPos().Position_y - Player_R);
+        //테이블 이미지 2번으로 사용.
+        Image* image = Image::FromFile(L"image/table2.png");
+        memdc2.DrawImage(image, 0, 0);
 
-            image = Image::FromFile(L"image/my_racket.png");
-            memdc2.DrawImage(image, player.GetPos().Position_x - Player_R, player.GetPos().Position_y - Player_R);
-          
-            memdc.DrawImage(&bitmap2,0,0);
-            g->DrawImage(&bitmap1, 0, 0);
+        if (player2.GetScore() == 0)
+            image = Image::FromFile(L"image/score/enemy_score0.png");
 
-            delete image;
-            delete g;
-           
-            EndPaint(hWnd, &ps);
-        }
-        break;
+        else if (player2.GetScore() == 1)
+            image = Image::FromFile(L"image/score/enemy_score1.png");
+        else if (player2.GetScore() == 2)
+            image = Image::FromFile(L"image/score/enemy_score2.png");
+        else if (player2.GetScore() == 3)
+            image = Image::FromFile(L"image/score/enemy_score3.png");
+        else if (player2.GetScore() == 4)
+            image = Image::FromFile(L"image/score/enemy_score4.png");
+        else if (player2.GetScore() == 5)
+            image = Image::FromFile(L"image/score/enemy_score5.png");
+        else if (player2.GetScore() == 6)
+            image = Image::FromFile(L"image/score/enemy_score6.png");
+        else if (player2.GetScore() == 7)
+            image = Image::FromFile(L"image/score/enemy_score7.png");
+        else if (player2.GetScore() == 8)
+            image = Image::FromFile(L"image/score/enemy_score8.png");
+        else if (player2.GetScore() == 9)
+            image = Image::FromFile(L"image/score/enemy_score9.png");
+        memdc2.DrawImage(image, 100, 200);
+
+        if (player.GetScore() == 0)
+            image = Image::FromFile(L"image/score/my_score0.png");
+        else if (player.GetScore() == 1)
+            image = Image::FromFile(L"image/score/my_score1.png");
+        else if (player.GetScore() == 2)
+            image = Image::FromFile(L"image/score/my_score2.png");
+        else if (player.GetScore() == 3)
+            image = Image::FromFile(L"image/score/my_score3.png");
+        else if (player.GetScore() == 4)
+            image = Image::FromFile(L"image/score/my_score4.png");
+        else if (player.GetScore() == 5)
+            image = Image::FromFile(L"image/score/my_score5.png");
+        else if (player.GetScore() == 6)
+            image = Image::FromFile(L"image/score/my_score6.png");
+        else if (player.GetScore() == 7)
+            image = Image::FromFile(L"image/score/my_score7.png");
+        else if (player.GetScore() == 8)
+            image = Image::FromFile(L"image/score/my_score8.png");
+        else if (player.GetScore() == 9)
+            image = Image::FromFile(L"image/score/my_score9.png");
+
+        memdc2.DrawImage(image, 100, 600);
+
+        image = Image::FromFile(L"image/ball.png");
+        memdc2.DrawImage(image, ball.GetPos().Position_x - Player_R, ball.GetPos().Position_y + Player_R);
+
+        image = Image::FromFile(L"image/enemy_racket.png");
+        memdc2.DrawImage(image, player2.GetPos().Position_x - Player_R, player2.GetPos().Position_y - Player_R);
+
+        image = Image::FromFile(L"image/my_racket.png");
+        memdc2.DrawImage(image, player.GetPos().Position_x - Player_R, player.GetPos().Position_y - Player_R);
+
+        memdc.DrawImage(&bitmap2, 0, 0);
+        g->DrawImage(&bitmap1, 0, 0);
+
+        delete image;
+        delete g;
+
+        EndPaint(hWnd, &ps);
+    }
+    break;
 
     case WM_TIMER:
         switch (wParam)
@@ -318,26 +394,20 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             player.UpdatePos_x(mouse.x);
             player.UpdatePos_y(mouse.y);
 
-        
-
             if (ball.CheckCollideRacket(&player))
-            {
                 COMMAND = RACKET_COLLIDE;
-            }
 
-           
             InvalidateRgn(hWnd, NULL, FALSE);
             break;
-      
+
         default:
             break;
         }
-        
+
         break;
     case WM_DESTROY:
         FreeConsole();
         KillTimer(hWnd, 1);
-        KillTimer(hWnd, 2);
         PostQuitMessage(0);
         break;
     default:
@@ -384,16 +454,28 @@ DWORD WINAPI Client(LPVOID arg)
     {
         //update 이벤트 대기
         WaitForSingleObject(updateData, INFINITE);
+        if (COMMAND == P_POSITION) {
 
-        snprintf(hbuf, sizeof(hbuf), "%d", COMMAND);
-        retval = send(client_sock, hbuf, sizeof(int), 0);
+            snprintf(hbuf, sizeof(hbuf), "%d", COMMAND);
+            retval = send(client_sock, hbuf, sizeof(int), 0);
 
-        Point2D tbuf;
-        tbuf = player.GetPos();
-        retval = send(client_sock, (char*)&tbuf, sizeof(Point2D), 0);
-        if (retval == SOCKET_ERROR)
-        err_display((char*)"send()");
+            Point2D tbuf;
+            tbuf = player.GetPos();
+            retval = send(client_sock, (char*)&tbuf, sizeof(Point2D), 0);
+            if (retval == SOCKET_ERROR)
+                err_display((char*)"send()");
+        }
+        else if (COMMAND == RACKET_COLLIDE)
+        {
+            snprintf(hbuf, sizeof(hbuf), "%d", COMMAND);
+            retval = send(client_sock, hbuf, sizeof(int), 0);
 
+            Accel2D Abuf;
+            Abuf = player.GetAccel();
+            retval = send(client_sock, (char*)&Abuf, sizeof(Accel2D), 0);
+            if (retval == SOCKET_ERROR)
+                err_display((char*)"send()");
+        }
 
         //이벤트 활성화
         COMMAND = P_POSITION;
@@ -441,8 +523,8 @@ DWORD WINAPI Update(LPVOID arg)
 
         printf("2P - Position_X: %d, Position_Y: %d\n", temp->Position_x, temp->Position_y);
 
-        player2.UpdatePos_x(temp->Position_x);
-        player2.UpdatePos_y(temp->Position_y);
+        player2.UpdatePos_x(Poschangex(temp->Position_x));
+        player2.UpdatePos_y(Poschangey(temp->Position_y));
 
         SetEvent(updateData);
     }

@@ -8,6 +8,7 @@ Player::Player()
     m_Accel.Accel_x = 0.0;
     m_Accel.Accel_y = 0.0;
     m_Goal = 0;
+    m_score = 0;
 }
 
 Player::Player(int xPos, int yPos, float xAccel, float yAccel)
@@ -18,6 +19,7 @@ Player::Player(int xPos, int yPos, float xAccel, float yAccel)
     m_Accel.Accel_x = xAccel;
     m_Accel.Accel_y = yAccel;
     m_Goal = 0;
+    m_score = 0;
 }
 Point2D Player::GetPos()
 {
@@ -40,4 +42,9 @@ void Player::UpdatePos_y(int pos)
 void Player::Goal(void)
 {
     m_Goal++;
+}
+
+int Player::GetScore(void)
+{
+    return m_score;
 }
