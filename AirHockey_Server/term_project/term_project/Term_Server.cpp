@@ -189,8 +189,10 @@ DWORD WINAPI getClient(LPVOID arg)
 			err_display("recv()");
 		}
 
-		int* temp = (int*)buf;
-		header = *temp;
+		//int* temp = (int*)buf;
+		//header = *temp;
+
+		header = atoi(buf);
 
 		//if (id == 0)
 		//	printf("[TCP 클라이언트1] 헤더 수신 완료: %d\n", header);

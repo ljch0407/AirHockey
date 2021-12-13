@@ -27,12 +27,14 @@ INT_PTR CALLBACK    About(HWND, UINT, WPARAM, LPARAM);
 DWORD WINAPI Client(LPVOID arg);
 DWORD WINAPI Update(LPVOID arg);
 
-Player player(40, 60, 20, 20);
-Player player2(40, 60, 20, 20);
-Ball ball(200, 400, 20, 20);
+Player player(40, 60, 0, 0);
+Player player2(40, 60, 0, 0);
+Ball ball(200, 400, 0, 0);
 
 POINT mouse;
 HDC hdc;
+
+float prev_x, prev_y;
 
 HWND hEdit, hEdit1, hEdit2;
 
@@ -393,10 +395,18 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         case 1:
             GetCursorPos(&mouse);
             ScreenToClient(hWnd, &mouse);
+
+            
             player.UpdatePos_x(mouse.x);
             player.UpdatePos_y(mouse.y);
             
-            std::cout << "mousex: " << mouse.x << ", " << mouse.y << std::endl;
+            player.updateAccel_x(prev_x);
+            player.updateAccel_y(prev_y);
+
+            //std::cout << "mousex: " << mouse.x << ", " << mouse.y << std::endl;
+
+            prev_x = mouse.x;
+            prev_y = mouse.y;
 
             InvalidateRgn(hWnd, NULL, FALSE);
             SetTimer(hWnd, 1, 100, NULL);

@@ -11,7 +11,7 @@ Player::Player()
     m_score = 0;
 }
 
-Player::Player(int xPos, int yPos, float xAccel, float yAccel)
+Player::Player(float xPos, float yPos, float xAccel, float yAccel)
 {
     m_Position.Position_x = xPos;
     m_Position.Position_y = yPos;
@@ -31,14 +31,24 @@ Accel2D Player::GetAccel()
     return m_Accel;
 }
 
-void Player::UpdatePos_x(int pos)
+void Player::UpdatePos_x(float pos)
 {
     m_Position.Position_x = pos;
 }
-void Player::UpdatePos_y(int pos)
+void Player::UpdatePos_y(float pos)
 {
     m_Position.Position_y = pos;
 }
+
+void Player::updateAccel_x(float pos)
+{
+    m_Accel.Accel_x = m_Position.Position_x - pos;
+}
+void Player::updateAccel_y(float pos)
+{
+    m_Accel.Accel_y = m_Position.Position_y - pos;
+}
+
 void Player::Goal(int score)
 {
     m_score = score;

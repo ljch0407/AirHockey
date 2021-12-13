@@ -11,13 +11,15 @@ private:
 public:
     Player();
 
-    Player(int xPos, int yPos, float xAccel, float yAccel);
+    Player(float xPos, float yPos, float xAccel, float yAccel);
     Point2D GetPos();
 
     Accel2D GetAccel();
 
-    void UpdatePos_x(int pos);
-    void UpdatePos_y(int pos);
+    void UpdatePos_x(float pos);
+    void UpdatePos_y(float pos);
+    void updateAccel_x(float pos);
+    void updateAccel_y(float pos);
     void Goal(int score);
     int GetScore(void);
 };
