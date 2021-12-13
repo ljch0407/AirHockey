@@ -120,16 +120,34 @@ bool Ball::CheckCollideRacket(Player* point)
         {
             if (m_Position.Position_y + 30 > point->GetPos().Position_y && m_Position.Position_y - 30 < point->GetPos().Position_y)
             {
-                Collide = true;
-                return Collide;
+                if (m_Position.Position_y > point->GetPos().Position_y)
+                {
+                    Collide = true;
+                    return Collide;
+                }
+
+                if (m_Position.Position_y < point->GetPos().Position_y)
+                {
+                    Collide = true;
+                    return Collide;
+                }
+
             }
         }
-        else if (m_Position.Position_x < point->GetPos().Position_x)
+        if (m_Position.Position_x < point->GetPos().Position_x)
         {
             if (m_Position.Position_y + 30 > point->GetPos().Position_y && m_Position.Position_y - 30 < point->GetPos().Position_y)
             {
-                Collide = true;
-                return Collide;
+                if (m_Position.Position_y > point->GetPos().Position_y)
+                {
+                    Collide = true;
+                    return Collide;
+                }
+                 if (m_Position.Position_y < point->GetPos().Position_y)
+                {
+                    Collide = true;
+                    return Collide;
+                }
             }
         }
     }

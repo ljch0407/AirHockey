@@ -28,7 +28,7 @@ DWORD WINAPI Client(LPVOID arg);
 DWORD WINAPI Update(LPVOID arg);
 
 Player player(40, 60, 20, 20);
-Player player2(40, 60, 0, 20);
+Player player2(40, 60, 20, 20);
 Ball ball(200, 400, 20, 20);
 
 POINT mouse;
@@ -317,7 +317,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         memdc2.FillRectangle(&whitebursh, 0, 0, 400, 800);
 
         //테이블 이미지 2번으로 사용.
-        Image* image = Image::FromFile(L"image/table1.png");
+        Image* image = Image::FromFile(L"image/table2.png");
         memdc2.DrawImage(image, 0, 0);
 
         if (player2.GetScore() == 0)
@@ -370,10 +370,10 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         memdc2.DrawImage(image, ball.GetPos().Position_x - Player_R, ball.GetPos().Position_y + Player_R);
 
         image = Image::FromFile(L"image/enemy_racket.png");
-        memdc2.DrawImage(image, player2.GetPos().Position_x - Player_R, player2.GetPos().Position_y - Player_R);
+        memdc2.DrawImage(image, player2.GetPos().Position_x - Player_R, player2.GetPos().Position_y + Player_R);
 
         image = Image::FromFile(L"image/my_racket.png");
-        memdc2.DrawImage(image, player.GetPos().Position_x - Player_R, player.GetPos().Position_y - Player_R);
+        memdc2.DrawImage(image, player.GetPos().Position_x - Player_R, player.GetPos().Position_y + Player_R);
 
         memdc.DrawImage(&bitmap2, 0, 0);
         g->DrawImage(&bitmap1, 0, 0);
@@ -393,9 +393,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             ScreenToClient(hWnd, &mouse);
             player.UpdatePos_x(mouse.x);
             player.UpdatePos_y(mouse.y);
-
-            if (ball.CheckCollideRacket(&player))
-                COMMAND = RACKET_COLLIDE;
 
             InvalidateRgn(hWnd, NULL, FALSE);
             break;
@@ -454,6 +451,10 @@ DWORD WINAPI Client(LPVOID arg)
     {
         //update 이벤트 대기
         WaitForSingleObject(updateData, INFINITE);
+       
+        if (ball.CheckCollideRacket(&player))
+            COMMAND = RACKET_COLLIDE;
+
         if (COMMAND == P_POSITION) {
 
             snprintf(hbuf, sizeof(hbuf), "%d", COMMAND);
@@ -507,25 +508,33 @@ DWORD WINAPI Update(LPVOID arg)
 
         retval = recvn(client_sock, buf, sizeof(int), 0);
         printf("헤더 데이터: %d\n", atoi(buf));
+        if (atoi(buf) == 2)
+        {
+            retval = recvn(client_sock, buf, sizeof(Point2D), 0);
 
-        retval = recvn(client_sock, buf, sizeof(Point2D), 0);
+            Point2D* temp;
+            temp = (Point2D*)buf;
 
-        Point2D* temp;
-        temp = (Point2D*)buf;
+            printf("Position_X: %d, Position_Y: %d\n", temp->Position_x, temp->Position_y);
 
-        printf("Position_X: %d, Position_Y: %d\n", temp->Position_x, temp->Position_y);
+            ball.UpdatePos_x(temp->Position_x);
+            ball.UpdatePos_y(temp->Position_y);
 
-        ball.UpdatePos_x(temp->Position_x);
-        ball.UpdatePos_y(temp->Position_y);
+            retval = recvn(client_sock, buf, sizeof(Point2D), 0);
+            temp = (Point2D*)buf;
 
-        retval = recvn(client_sock, buf, sizeof(Point2D), 0);
-        temp = (Point2D*)buf;
+            printf("2P - Position_X: %d, Position_Y: %d\n", temp->Position_x, temp->Position_y);
 
-        printf("2P - Position_X: %d, Position_Y: %d\n", temp->Position_x, temp->Position_y);
-
-        player2.UpdatePos_x(Poschangex(temp->Position_x));
-        player2.UpdatePos_y(Poschangey(temp->Position_y));
-
+            player2.UpdatePos_x(Poschangex(temp->Position_x));
+            player2.UpdatePos_y(Poschangey(temp->Position_y));
+        }
+        else if (atoi(buf) == 3)
+        {
+            retval = recvn(client_sock, buf, sizeof(int), 0);
+            int* score;
+            score = (int*)buf;
+            printf("score : %d \n", *score);
+        }
         SetEvent(updateData);
     }
 }
