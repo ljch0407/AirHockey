@@ -317,7 +317,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         memdc2.FillRectangle(&whitebursh, 0, 0, 400, 800);
 
         //테이블 이미지 2번으로 사용.
-        Image* image = Image::FromFile(L"image/table2.png");
+        Image* image = Image::FromFile(L"image/table1.png");
         memdc2.DrawImage(image, 0, 0);
 
         if (player2.GetScore() == 0)

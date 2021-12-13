@@ -32,8 +32,8 @@ struct Point2D {
 
 //객체의 2차원 가속도
 struct Accel2D {
-	int accel_x;
-	int accel_y;
+	float accel_x;
+	float accel_y;
 };
 
 DWORD WINAPI updateClient(LPVOID arg);		//Server내부 업데이트 + 데이터 송신

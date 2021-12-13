@@ -44,8 +44,8 @@ int main() {
 	updateData[0] = CreateEvent(nullptr, false, true, nullptr);
 	updateData[1] = CreateEvent(nullptr, false, true, nullptr);
 
-	bAccel.accel_x = 1;
-	bAccel.accel_y = 1;
+	//bAccel.accel_x = 1;
+	//bAccel.accel_y = 1;
 
 	int retval;
 
@@ -169,7 +169,7 @@ DWORD WINAPI getClient(LPVOID arg)
 	addrLen = sizeof(clientAddr);
 	getpeername(argInfo->client_sock, (SOCKADDR*)&clientAddr, &addrLen);
 
-	printf("data 수신 시작\n");
+	//printf("data 수신 시작\n");
 	//data-recving
 	while (1)
 	{
@@ -188,113 +188,72 @@ DWORD WINAPI getClient(LPVOID arg)
 		if (retval == SOCKET_ERROR) {
 			err_display("recv()");
 		}
-		
+
 		header = atoi(buf);
-		if (id == 0)
-			printf("[TCP 클라이언트1] 헤더 수신 완료: %d\n", header);
-		else
-			printf("[TCP 클라이언트2] 헤더 수신 완료: %d\n", header);
+		
+		//if (id == 0)
+		//	printf("[TCP 클라이언트1] 헤더 수신 완료: %d\n", header);
+		//else
+		//	printf("[TCP 클라이언트2] 헤더 수신 완료: %d\n", header);
 
-		//포지션 데이터 수신
-		//position data recv
-		retval = recvn(argInfo->client_sock, buf, sizeof(Point2D), 0);
-		if (retval == SOCKET_ERROR) {
-			err_display("recv()");
-		}
-			
-		Point2D* temp;
-		temp = (Point2D*)buf;
-
-		if (id == 0)
-		{
-			pPosition[0].position_x = temp->position_x;
-			pPosition[0].position_y = temp->position_y;
-			printf("[TCP 클라이언트1 수신 정보] pPosition.x : %d, pPosition.y : %d\n", pPosition[0].position_x, pPosition[0].position_y);
-		}
-		else
-		{
-			pPosition[1].position_x = temp->position_x;
-			pPosition[1].position_y = temp->position_y;
-			printf("[TCP 클라이언트2 수신 정보] pPosition.x : %d, pPosition.y : %d\n", pPosition[1].position_x, pPosition[1].position_y);
-
-		}
 		//헤더별 분기
 		//header switch
-		//header = atoi(buf);
-		//switch (header)
-		//{
-		//case P_POSITION:
-		//	//포지션 데이터 수신
-		//	//position data recv
-		//	retval = recvn(argInfo->client_sock, buf, sizeof(Point2D), 0);
-		//	if (retval == SOCKET_ERROR) {
-		//		err_display("recv()");
-		//	}
-		//	
-		//	Point2D* temp;
-		//	temp = (Point2D*)buf;
+		switch (header)
+		{
+		case P_POSITION:
+			//포지션 데이터 수신
+			//position data recv
+			retval = recvn(argInfo->client_sock, buf, sizeof(Point2D), 0);
+			if (retval == SOCKET_ERROR) {
+				err_display("recv()");
+			}
+			
+			Point2D* temp;
+			temp = (Point2D*)buf;
 
-		//	if (id == 0)
-		//	{
-		//		pPosition[0].position_x = temp->position_x;
-		//		pPosition[0].position_y = temp->position_y;
-		//		printf("[TCP 클라이언트1 수신 정보] pPosition.x : %d, pPosition.y : %d\n", pPosition[0].position_x, pPosition[0].position_y);
-		//	}
-		//	else
-		//	{
-		//		pPosition[1].position_x = temp->position_x;
-		//		pPosition[1].position_y = temp->position_y;
-		//		printf("[TCP 클라이언트2 수신 정보] pPosition.x : %d, pPosition.y : %d\n", pPosition[1].position_x, pPosition[1].position_y);
-		//	}
-		//	break;
-		//case RACKET_COLLIDE:
-		//	//충돌 데이터 수신(Position, Accel, Angle)
-		//	//포지션 데이터 수신
-		//	retval = recv(argInfo->client_sock, buf, sizeof(Point2D), 0);
-		//	if (retval == SOCKET_ERROR) {
-		//		err_display("recv()");
-		//	}
+			if (id == 0)
+			{
+				pPosition[0].position_x = temp->position_x;
+				pPosition[0].position_y = temp->position_y;
+				//printf("[TCP 클라이언트1 수신 정보] pPosition.x : %d, pPosition.y : %d\n", pPosition[0].position_x, pPosition[0].position_y);
+			}
+			else
+			{
+				pPosition[1].position_x = temp->position_x;
+				pPosition[1].position_y = temp->position_y;
+				//printf("[TCP 클라이언트2 수신 정보] pPosition.x : %d, pPosition.y : %d\n", pPosition[1].position_x, pPosition[1].position_y);
+			}
 
-		//	Point2D* temp3;
-		//	temp3 = (Point2D*)buf;
+			break;
+		case RACKET_COLLIDE:
+			//충돌 데이터 수신(Accel)
+			//포지션 데이터 수신
+			retval = recv(argInfo->client_sock, buf, sizeof(Accel2D), 0);
+			if (retval == SOCKET_ERROR) {
+				err_display("recv()");
+			}
 
-		//	if (id == 0)
-		//	{
-		//		pPosition[0].position_x = temp3->position_x;
-		//		pPosition[0].position_y = temp3->position_y;
-		//	}
-		//	else
-		//	{
-		//		pPosition[1].position_x = temp3->position_x;
-		//		pPosition[1].position_y = temp3->position_y;
-		//	}
+			Accel2D* tempAccel;
+			tempAccel = (Accel2D*)buf;
 
-		//	//가속도 데이터 수신
-		//	retval = recv(argInfo->client_sock, buf, BUFSIZE, 0);
-		//	if (retval == SOCKET_ERROR) {
-		//		err_display("recv()");
-		//	}
-		//	Accel2D* temp2;
-		//	temp2 = (Accel2D*)buf;
-		//	if (id == 0)
-		//	{
-		//		pAccel[0].accel_x = temp2->accel_x;
-		//		pAccel[0].accel_y = temp2->accel_y;
-		//	}
-		//	else
-		//	{
-		//		pAccel[1].accel_x = temp2->accel_x;
-		//		pAccel[1].accel_y = temp2->accel_y;
-		//	}
-		//	//각 데이터 수신
-		//	/*retval = recv(argInfo->client_sock, buf, BUFSIZE, 0);
-		//	if (retval == SOCKET_ERROR) {
-		//		err_display("recv()");
-		//	}
-		//	collideAngel = atoi(buf);
-		//	*///추가 -> 이거 3개를 충돌 구조체로 묶어서 한번에 송/수신하는 방법은 어떨까?
-			//break;
-		//}
+			//if (id == 0)
+			//{
+			//	bAccel.accel_x = tempAccel->accel_x;
+			//	bAccel.accel_y = tempAccel->accel_y;
+			//}
+			//else
+			//{
+			//	bAccel.accel_x = tempAccel->accel_x;
+			//	bAccel.accel_y = tempAccel->accel_y;
+			//}
+
+			printf("[충돌 처리 정보] Accel.x: %f, Accel.y: %f\n", tempAccel->accel_x, tempAccel->accel_y);
+
+			bAccel.accel_x = tempAccel->accel_x / 20;
+			bAccel.accel_y = tempAccel->accel_y / 20;
+
+			break;
+		}
 
 		//이벤트 활성화
 		if (id == 0)
@@ -332,7 +291,7 @@ DWORD WINAPI updateClient(LPVOID arg)
 	getpeername(argInfo->client_sock, (SOCKADDR*)&clientAddr, &addrLen);
 	
 	//sendCommand()
-	printf("data 송신 시작\n");
+	//printf("data 송신 시작\n");
 
 	while (1)
 	{
@@ -347,11 +306,25 @@ DWORD WINAPI updateClient(LPVOID arg)
 		if (id == 0)
 		{
 			bPosition = updateBall(bAccel);
-			//pPosition[1].position_x += 1;
-			//pPosition[1].position_y -= 1;
 
-			//checkGoal();
+			checkGoal();
 
+			if (P1Goal || P2Goal)
+			{
+				//헤더 전송
+				snprintf(buf, sizeof(buf), "%d", GOAL);
+
+				retval = send(argInfo->client_sock, buf, sizeof(int), 0);
+				if (retval == SOCKET_ERROR) {
+					err_display("send()");
+				}
+
+				//점수 데이터 전송
+				retval = send(argInfo->client_sock, (char*)&score, sizeof(int), 0);
+				if (retval == SOCKET_ERROR) {
+					err_display("send()");
+				}
+			}
 		}
 
 		//헤더 파일 전송
