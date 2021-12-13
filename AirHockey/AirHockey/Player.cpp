@@ -39,18 +39,9 @@ void Player::UpdatePos_y(int pos)
 {
     m_Position.Position_y = pos;
 }
-
-void Player::UpdateAccel_x(float pos)
+void Player::Goal(void)
 {
-    m_Accel.Accel_x = m_Position.Position_x - pos;
-}
-void Player::UpdateAccel_y(float pos)
-{
-    m_Accel.Accel_y = m_Position.Position_y - pos;
-}
-void Player::Goal(int score)
-{
-    m_score = score;
+    m_Goal++;
 }
 
 int Player::GetScore(void)

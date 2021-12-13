@@ -27,14 +27,12 @@ INT_PTR CALLBACK    About(HWND, UINT, WPARAM, LPARAM);
 DWORD WINAPI Client(LPVOID arg);
 DWORD WINAPI Update(LPVOID arg);
 
-Player player(40, 60, 0, 0);
-Player player2(40, 60, 0, 0);
-Ball ball(200, 400, 0, 0);
+Player player(40, 60, 20, 20);
+Player player2(40, 60, 20, 20);
+Ball ball(200, 400, 20, 20);
 
 POINT mouse;
 HDC hdc;
-float prev_x;
-float prev_y;
 
 HWND hEdit, hEdit1, hEdit2;
 
@@ -393,15 +391,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         case 1:
             GetCursorPos(&mouse);
             ScreenToClient(hWnd, &mouse);
-
-            prev_x = player.GetPos().Position_x;
-            prev_y = player.GetPos().Position_y;
-           
             player.UpdatePos_x(mouse.x);
             player.UpdatePos_y(mouse.y);
-
-            player.UpdateAccel_x(prev_x);
-            player.UpdateAccel_y(prev_y);
 
             InvalidateRgn(hWnd, NULL, FALSE);
             break;
@@ -516,7 +507,7 @@ DWORD WINAPI Update(LPVOID arg)
         WaitForSingleObject(recvData, INFINITE);
 
         retval = recvn(client_sock, buf, sizeof(int), 0);
-       //printf("헤더 데이터: %d\n", atoi(buf));
+        printf("헤더 데이터: %d\n", atoi(buf));
         if (atoi(buf) == 2)
         {
             retval = recvn(client_sock, buf, sizeof(Point2D), 0);
@@ -524,7 +515,7 @@ DWORD WINAPI Update(LPVOID arg)
             Point2D* temp;
             temp = (Point2D*)buf;
 
-           //printf("Position_X: %d, Position_Y: %d\n", temp->Position_x, temp->Position_y);
+            printf("Position_X: %d, Position_Y: %d\n", temp->Position_x, temp->Position_y);
 
             ball.UpdatePos_x(temp->Position_x);
             ball.UpdatePos_y(temp->Position_y);
@@ -532,7 +523,7 @@ DWORD WINAPI Update(LPVOID arg)
             retval = recvn(client_sock, buf, sizeof(Point2D), 0);
             temp = (Point2D*)buf;
 
-           //printf("2P - Position_X: %d, Position_Y: %d\n", temp->Position_x, temp->Position_y);
+            printf("2P - Position_X: %d, Position_Y: %d\n", temp->Position_x, temp->Position_y);
 
             player2.UpdatePos_x(Poschangex(temp->Position_x));
             player2.UpdatePos_y(Poschangey(temp->Position_y));
@@ -542,7 +533,7 @@ DWORD WINAPI Update(LPVOID arg)
             retval = recvn(client_sock, buf, sizeof(int), 0);
             int* score;
             score = (int*)buf;
-            player.Goal(*score);
+            printf("score : %d \n", *score);
         }
         SetEvent(updateData);
     }
