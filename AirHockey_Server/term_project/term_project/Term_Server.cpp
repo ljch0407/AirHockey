@@ -12,16 +12,9 @@ SOCKET client_sock1, client_sock2;
 
 Point2D pPosition[2];
 Point2D bPosition;
-Accel2D pAccel[2];
 Accel2D bAccel;
 
-float collideAngel;
 int score;
-
-bool Game_Start;
-bool Ractket;
-bool Game_end;
-bool Connected1P, Connected2P;
 bool P1Goal, P2Goal;
 
 HANDLE recvData[2], updateData[2];
@@ -29,23 +22,16 @@ HANDLE recvData[2], updateData[2];
 int main() {
 
 	//초기화
-	Connected1P = false;
-	Connected2P = false;
-
 	bPosition.position_x = 200;
 	bPosition.position_y = 400;
 
-	pPosition[1].position_x = 100;
-	pPosition[1].position_y = 700;
-
+	pPosition[1].position_x = 400;
+	pPosition[1].position_y = 200;
 
 	recvData[0] = CreateEvent(nullptr, false, false, nullptr);
 	recvData[1] = CreateEvent(nullptr, false, false, nullptr);
 	updateData[0] = CreateEvent(nullptr, false, true, nullptr);
 	updateData[1] = CreateEvent(nullptr, false, true, nullptr);
-
-	//bAccel.accel_x = 1;
-	//bAccel.accel_y = 1;
 
 	int retval;
 
@@ -150,20 +136,10 @@ DWORD WINAPI getClient(LPVOID arg)
 
 	//클라이언트 처리
 
-	if (id == 0)
-	{
-		client_sock1 = argInfo->client_sock;
-		
-		Connected1P = true;
-		printf("Client1 Connected\n");
-	}
-	else
-	{
-		client_sock2 = argInfo->client_sock;
-
-		Connected2P = true;
-		printf("Client2 Connected\n");
-	}
+	//if (id == 0)
+	//	printf("Client1 Connected\n");
+	//else
+	//	printf("Client2 Connected\n");
 
 	//getpeername
 	addrLen = sizeof(clientAddr);
@@ -189,10 +165,8 @@ DWORD WINAPI getClient(LPVOID arg)
 			err_display("recv()");
 		}
 
-		//int* temp = (int*)buf;
-		//header = *temp;
-
-		header = atoi(buf);
+		int* temp = (int*)buf;
+		header = *temp;
 
 		//if (id == 0)
 		//	printf("[TCP 클라이언트1] 헤더 수신 완료: %d\n", header);
@@ -228,6 +202,7 @@ DWORD WINAPI getClient(LPVOID arg)
 			}
 
 			break;
+
 		case RACKET_COLLIDE:
 			//충돌 데이터 수신(Accel)
 			//포지션 데이터 수신
@@ -238,19 +213,6 @@ DWORD WINAPI getClient(LPVOID arg)
 
 			Accel2D* tempAccel;
 			tempAccel = (Accel2D*)buf;
-
-			//if (id == 0)
-			//{
-			//	bAccel.accel_x = tempAccel->accel_x;
-			//	bAccel.accel_y = tempAccel->accel_y;
-			//}
-			//else
-			//{
-			//	bAccel.accel_x = tempAccel->accel_x;
-			//	bAccel.accel_y = tempAccel->accel_y;
-			//}
-
-			//printf("[충돌 처리 정보] Accel.x: %f, Accel.y: %f\n", tempAccel->accel_x, tempAccel->accel_y);
 
 			bAccel.accel_x = tempAccel->accel_x / 4000;
 			bAccel.accel_y = tempAccel->accel_y / 4000;
@@ -263,14 +225,7 @@ DWORD WINAPI getClient(LPVOID arg)
 			SetEvent(recvData[0]);
 		else
 			SetEvent(recvData[1]);
-
-		//자료 업데이트(의미 없으면 안해도 됨)
-		//update player position -> for 2
-		//update player 
-
-
 	}
-
 }
 
 //서버 업데이트 + 양 클라이언트에게 데이터 전송
@@ -283,7 +238,6 @@ DWORD WINAPI updateClient(LPVOID arg)
 	int addrLen;
 	char buf[BUFSIZE];
 	ClientId* argInfo;
-	ClientId a;
 
 	//클라이언트 번호 처리(각 클라이언트 정보 구분)
 	argInfo = (ClientId*)arg;
@@ -324,7 +278,8 @@ DWORD WINAPI updateClient(LPVOID arg)
 		else
 			snprintf(buf, sizeof(buf), "%d", B_POSITION);
 
-		header = atoi(buf);
+		int* temp = (int*)buf;
+		header = *temp;
 
 		switch (header)
 		{
@@ -369,7 +324,6 @@ DWORD WINAPI updateClient(LPVOID arg)
 				temp.position_y = 710 - bPosition.position_y;
 			}
 			
-
 			//공 데이터 전송
 			retval = send(argInfo->client_sock, (char*)&temp, sizeof(Point2D), 0);
 			if (retval == SOCKET_ERROR) {
@@ -416,22 +370,7 @@ DWORD WINAPI updateClient(LPVOID arg)
 			SetEvent(updateData[1]);
 	}
 
-	//if (Game_end)
-		//send Game-End
-
 }
-
-//플레이어가 모두 연결되었다면 GameStart 변수를 클라에게 전송
-//bool checkAllConnected()
-//{
-//	if (Connected1P && Connected2P)
-//	{
-//		Game_Start = true;
-//		return true;
-//	}
-//	else
-//		return false;
-//}
 
 //공의 가속도가 0 이상인지 체크
 bool checkMoveBall()
@@ -525,12 +464,6 @@ Accel2D circuitCollide(Accel2D Accel, int collideType)
 	return newAccel;
 }
 
-//스코어를 확인해서 게임의 종료여부 결정
-void checkScore()
-{
-	if (score == 100)
-		Game_end = true;
-}
 
 // 소켓 함수 오류 출력 후 종료
 void err_quit(const char* msg)
