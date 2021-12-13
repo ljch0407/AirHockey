@@ -156,27 +156,3 @@ bool Ball::CheckCollideRacket(Player* point)
     return Collide;
 }
 
-void Ball::CheckGoal(Player* p1, Player* p2)
-{
-
-    if (m_Position.Position_x >= 170 && m_Position.Position_x <= 230)
-    {
-        if (m_Position.Position_y >= 0 && m_Position.Position_y <= 30)
-        {
-            m_Position.Position_x = 200;
-            m_Position.Position_y = 400;
-            m_Accel.Accel_x = 0;
-            m_Accel.Accel_y = 0;
-            p1->Goal();
-
-        }
-        else if (m_Position.Position_y >= 770 && m_Position.Position_y < 800)
-        {
-            m_Position.Position_x = 200;
-            m_Position.Position_y = 400;
-            m_Accel.Accel_x = 0;
-            m_Accel.Accel_y = 0;
-            p2->Goal();
-        }
-    }
-}

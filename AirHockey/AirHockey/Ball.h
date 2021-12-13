@@ -31,5 +31,4 @@ public:
 
     void CheckcollideCircuit();
     bool CheckCollideRacket(Player* point);
-    void CheckGoal(Player* p1, Player* p2);
 };

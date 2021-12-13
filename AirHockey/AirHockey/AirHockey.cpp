@@ -27,12 +27,14 @@ INT_PTR CALLBACK    About(HWND, UINT, WPARAM, LPARAM);
 DWORD WINAPI Client(LPVOID arg);
 DWORD WINAPI Update(LPVOID arg);
 
-Player player(40, 60, 20, 20);
-Player player2(40, 60, 20, 20);
-Ball ball(200, 400, 20, 20);
+Player player(40, 60, 0, 0);
+Player player2(40, 60, 0, 0);
+Ball ball(200, 400, 0, 0);
 
 POINT mouse;
 HDC hdc;
+float prev_x;
+float prev_y;
 
 HWND hEdit, hEdit1, hEdit2;
 
@@ -391,8 +393,15 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         case 1:
             GetCursorPos(&mouse);
             ScreenToClient(hWnd, &mouse);
+
+            prev_x = player.GetPos().Position_x;
+            prev_y = player.GetPos().Position_y;
+
             player.UpdatePos_x(mouse.x);
             player.UpdatePos_y(mouse.y);
+
+            player.UpdateAccel_x(prev_x);
+            player.UpdateAccel_y(prev_y);
 
             InvalidateRgn(hWnd, NULL, FALSE);
             break;
@@ -451,7 +460,7 @@ DWORD WINAPI Client(LPVOID arg)
     {
         //update 이벤트 대기
         WaitForSingleObject(updateData, INFINITE);
-       
+
         if (ball.CheckCollideRacket(&player))
             COMMAND = RACKET_COLLIDE;
 
@@ -533,7 +542,7 @@ DWORD WINAPI Update(LPVOID arg)
             retval = recvn(client_sock, buf, sizeof(int), 0);
             int* score;
             score = (int*)buf;
-            printf("score : %d \n", *score);
+            player.Goal(*score);
         }
         SetEvent(updateData);
     }
