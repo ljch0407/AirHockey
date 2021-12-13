@@ -247,7 +247,7 @@ DWORD WINAPI getClient(LPVOID arg)
 			//	bAccel.accel_y = tempAccel->accel_y;
 			//}
 
-			printf("[충돌 처리 정보] Accel.x: %f, Accel.y: %f\n", tempAccel->accel_x, tempAccel->accel_y);
+			//printf("[충돌 처리 정보] Accel.x: %f, Accel.y: %f\n", tempAccel->accel_x, tempAccel->accel_y);
 
 			bAccel.accel_x = tempAccel->accel_x / 20;
 			bAccel.accel_y = tempAccel->accel_y / 20;
@@ -309,73 +309,93 @@ DWORD WINAPI updateClient(LPVOID arg)
 
 			checkGoal();
 
-			if (P1Goal || P2Goal)
-			{
-				//헤더 전송
-				snprintf(buf, sizeof(buf), "%d", GOAL);
-
-				retval = send(argInfo->client_sock, buf, sizeof(int), 0);
-				if (retval == SOCKET_ERROR) {
-					err_display("send()");
-				}
-
-				//점수 데이터 전송
-				retval = send(argInfo->client_sock, (char*)&score, sizeof(int), 0);
-				if (retval == SOCKET_ERROR) {
-					err_display("send()");
-				}
-			}
 		}
 
-		//헤더 파일 전송
-		snprintf(buf, sizeof(buf), "%d", B_POSITION);
+		if (P1Goal || P2Goal)
+			snprintf(buf, sizeof(buf), "%d", GOAL);
+		//else if (!checkMoveBall())
+		//	//send strike-effect
+		//{
 
-		retval = send(argInfo->client_sock, buf, sizeof(int), 0);
-		if (retval == SOCKET_ERROR) {
-			err_display("send()");
-		}
-
-		//printf("헤더 전송 완료\n");
-
-		Point2D temp;
-		temp.position_x = bPosition.position_x;
-		temp.position_y = bPosition.position_y;
-
-		//공 데이터 전송
-		retval = send(argInfo->client_sock, (char*)&temp, sizeof(Point2D), 0);
-		if (retval == SOCKET_ERROR) {
-			err_display("send()");
-		}
-
-		//printf("공 데이터 전송 완료: position_x: %d, position_y: %d\n", temp.position_x, temp.position_y);
-
-
-		//플레이어 데이터 전송
-		if (id == 0)
-		{
-			temp.position_x = pPosition[1].position_x;
-			temp.position_y = pPosition[1].position_y;
-
-			retval = send(argInfo->client_sock, (char*)&temp, sizeof(Point2D), 0);
-			if (retval == SOCKET_ERROR) {
-				err_display("send()");
-			}
-
-			//printf("플레이어2 데이터 전송 완료: position_x: %d, position_y: %d\n", temp.position_x, temp.position_y);
-		}
+		//}
 		else
-		{
-			temp.position_x = pPosition[0].position_x;
-			temp.position_y = pPosition[0].position_y;
+			snprintf(buf, sizeof(buf), "%d", B_POSITION);
 
+		header = atoi(buf);
+
+		switch (header)
+		{
+		case GOAL:
+			printf("[골 정보] 현재 스코어: %d\n", score);
+			//헤더 전송
+			retval = send(argInfo->client_sock, buf, sizeof(int), 0);
+			if (retval == SOCKET_ERROR) {
+				err_display("send()");
+			}
+
+			//점수 데이터 전송
+			retval = send(argInfo->client_sock, (char*)&score, sizeof(int), 0);
+			if (retval == SOCKET_ERROR) {
+				err_display("send()");
+			}
+
+			break;
+
+		case MOVE_BALL:
+			break;
+
+		case B_POSITION:
+
+			//헤더 파일 전송
+			retval = send(argInfo->client_sock, buf, sizeof(int), 0);
+			if (retval == SOCKET_ERROR) {
+				err_display("send()");
+			}
+
+			//printf("헤더 전송 완료\n");
+
+			Point2D temp;
+			temp.position_x = bPosition.position_x;
+			temp.position_y = bPosition.position_y;
+
+			//공 데이터 전송
 			retval = send(argInfo->client_sock, (char*)&temp, sizeof(Point2D), 0);
 			if (retval == SOCKET_ERROR) {
 				err_display("send()");
 			}
 
-			//printf("플레이어1 데이터 전송 완료: position_x: %d, position_y: %d\n", temp.position_x, temp.position_y);
+			//printf("공 데이터 전송 완료: position_x: %d, position_y: %d\n", temp.position_x, temp.position_y);
+
+
+			//플레이어 데이터 전송
+			if (id == 0)
+			{
+				temp.position_x = pPosition[1].position_x;
+				temp.position_y = pPosition[1].position_y;
+
+				retval = send(argInfo->client_sock, (char*)&temp, sizeof(Point2D), 0);
+				if (retval == SOCKET_ERROR) {
+					err_display("send()");
+				}
+
+				//printf("플레이어2 데이터 전송 완료: position_x: %d, position_y: %d\n", temp.position_x, temp.position_y);
+			}
+			else
+			{
+				temp.position_x = pPosition[0].position_x;
+				temp.position_y = pPosition[0].position_y;
+
+				retval = send(argInfo->client_sock, (char*)&temp, sizeof(Point2D), 0);
+				if (retval == SOCKET_ERROR) {
+					err_display("send()");
+				}
+
+				//printf("플레이어1 데이터 전송 완료: position_x: %d, position_y: %d\n", temp.position_x, temp.position_y);
+			}
+
+			break;
 		}
-		
+
 		//event활성화
 		if (id == 0)
 			SetEvent(updateData[0]);
@@ -383,27 +403,22 @@ DWORD WINAPI updateClient(LPVOID arg)
 			SetEvent(updateData[1]);
 	}
 
-	//if (!checkMoveBall())
-		//send STRIKE-Effect
-
 	//if (Game_end)
 		//send Game-End
-
 
 }
 
 //플레이어가 모두 연결되었다면 GameStart 변수를 클라에게 전송
-bool checkAllConnected()
-{
-	if (Connected1P && Connected2P)
-	{
-		Game_Start = true;
-		return true;
-	}
-	else
-		return false;
-		
-}
+//bool checkAllConnected()
+//{
+//	if (Connected1P && Connected2P)
+//	{
+//		Game_Start = true;
+//		return true;
+//	}
+//	else
+//		return false;
+//}
 
 //공의 가속도가 0 이상인지 체크
 bool checkMoveBall()
