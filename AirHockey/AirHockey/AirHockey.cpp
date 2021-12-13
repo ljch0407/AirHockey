@@ -54,7 +54,7 @@ int Poschangex(int x)
         temp = 200 - x;
         x = x + temp * 2;
     }*/
-    return 400 - x;
+    return 385 - x;
 }
 
 int Poschangey(int y)
@@ -70,7 +70,7 @@ int Poschangey(int y)
         temp = 400 - y;
         y = y + temp * 2;
     }*/
-    return 710 - y;
+    return 700 - y;
 }
 
 void DisPlayText(char* fmt, ...)

@@ -252,8 +252,8 @@ DWORD WINAPI getClient(LPVOID arg)
 
 			//printf("[충돌 처리 정보] Accel.x: %f, Accel.y: %f\n", tempAccel->accel_x, tempAccel->accel_y);
 
-			bAccel.accel_x = tempAccel->accel_x / 40;
-			bAccel.accel_y = tempAccel->accel_y / 40;
+			bAccel.accel_x = tempAccel->accel_x / 4000;
+			bAccel.accel_y = tempAccel->accel_y / 4000;
 
 			break;
 		}
@@ -358,8 +358,17 @@ DWORD WINAPI updateClient(LPVOID arg)
 			//printf("헤더 전송 완료\n");
 
 			Point2D temp;
-			temp.position_x = bPosition.position_x;
-			temp.position_y = bPosition.position_y;
+			if (id == 0)
+			{
+				temp.position_x = bPosition.position_x;
+				temp.position_y = bPosition.position_y;
+			}
+			else
+			{
+				temp.position_x = 385 - bPosition.position_x;
+				temp.position_y = 710 - bPosition.position_y;
+			}
+			
 
 			//공 데이터 전송
 			retval = send(argInfo->client_sock, (char*)&temp, sizeof(Point2D), 0);
@@ -375,6 +384,7 @@ DWORD WINAPI updateClient(LPVOID arg)
 			{
 				temp.position_x = pPosition[1].position_x;
 				temp.position_y = pPosition[1].position_y;
+				printf("player1: %f, %f\n", temp.position_x, temp.position_y);
 
 				retval = send(argInfo->client_sock, (char*)&temp, sizeof(Point2D), 0);
 				if (retval == SOCKET_ERROR) {
@@ -458,7 +468,7 @@ void checkGoal()
 				score = 100;
 			else score += 10;
 		}
-		else if (bPosition.position_y >= 750 && bPosition.position_y < 800)
+		else if (bPosition.position_y >= 650 && bPosition.position_y < 720)
 		{
 			resetBall();
 			P1Goal = true;
