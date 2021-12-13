@@ -24,8 +24,8 @@
 //플레이어 에 대한 변수와 구조체 선언
 struct Point2D
 {
-    int Position_x;
-    int Position_y;
+    float Position_x;
+    float Position_y;
 };
 
 struct Accel2D

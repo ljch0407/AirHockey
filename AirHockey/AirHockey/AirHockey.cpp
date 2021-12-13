@@ -41,7 +41,7 @@ int COMMAND = P_POSITION;
 
 int Poschangex(int x)
 {
-    int temp = 0;
+   /* int temp = 0;
     if (x >= 200)
     {
         temp = x - 200;
@@ -51,13 +51,13 @@ int Poschangex(int x)
     {
         temp = 200 - x;
         x = x + temp * 2;
-    }
-    return x;
+    }*/
+    return 400 - x;
 }
 
 int Poschangey(int y)
 {
-    int temp = 0;
+    /*int temp = 0;
     if (y >= 400)
     {
         temp = y - 400;
@@ -67,8 +67,8 @@ int Poschangey(int y)
     {
         temp = 400 - y;
         y = y + temp * 2;
-    }
-    return y;
+    }*/
+    return 710 - y;
 }
 
 void DisPlayText(char* fmt, ...)
@@ -252,7 +252,7 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
     hInst = hInstance; // 인스턴스 핸들을 전역 변수에 저장합니다.
 
     HWND hWnd = CreateWindowW(szWindowClass, szTitle, WS_OVERLAPPEDWINDOW,
-        CW_USEDEFAULT, 0, 400, 800, nullptr, nullptr, hInstance, nullptr);
+        CW_USEDEFAULT, 0, 400, 800 , nullptr, nullptr, hInstance, nullptr);
 
     if (!hWnd)
     {
@@ -279,10 +279,12 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
-    SetTimer(hWnd, 1, 100, NULL);
-
+  
     switch (message)
     {
+    case WM_CREATE:
+        SetTimer(hWnd, 1, 100, NULL);
+        break;
     case WM_COMMAND:
     {
         int wmId = LOWORD(wParam);
@@ -373,7 +375,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         memdc2.DrawImage(image, player2.GetPos().Position_x - Player_R, player2.GetPos().Position_y + Player_R);
 
         image = Image::FromFile(L"image/my_racket.png");
-        memdc2.DrawImage(image, player.GetPos().Position_x - Player_R, player.GetPos().Position_y + Player_R);
+        memdc2.DrawImage(image, player.GetPos().Position_x - Player_R, player.GetPos().Position_y - Player_R);
 
         memdc.DrawImage(&bitmap2, 0, 0);
         g->DrawImage(&bitmap1, 0, 0);
@@ -393,8 +395,11 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             ScreenToClient(hWnd, &mouse);
             player.UpdatePos_x(mouse.x);
             player.UpdatePos_y(mouse.y);
+            
+            std::cout << "mousex: " << mouse.x << ", " << mouse.y << std::endl;
 
             InvalidateRgn(hWnd, NULL, FALSE);
+            SetTimer(hWnd, 1, 100, NULL);
             break;
 
         default:
@@ -531,9 +536,11 @@ DWORD WINAPI Update(LPVOID arg)
         else if (atoi(buf) == 3)
         {
             retval = recvn(client_sock, buf, sizeof(int), 0);
-            int* score;
-            score = (int*)buf;
-            printf("score : %d \n", *score);
+            int* temp = (int*)buf;
+            int score = *temp;
+            printf("score : %d \n", score);
+            player.Goal(score / 10);
+            player2.Goal(score % 10);
         }
         SetEvent(updateData);
     }

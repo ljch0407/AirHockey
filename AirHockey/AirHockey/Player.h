@@ -18,6 +18,6 @@ public:
 
     void UpdatePos_x(int pos);
     void UpdatePos_y(int pos);
-    void Goal(void);
+    void Goal(int score);
     int GetScore(void);
 };

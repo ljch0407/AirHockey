@@ -167,7 +167,7 @@ void Ball::CheckGoal(Player* p1, Player* p2)
             m_Position.Position_y = 400;
             m_Accel.Accel_x = 0;
             m_Accel.Accel_y = 0;
-            p1->Goal();
+            //p1->Goal();
 
         }
         else if (m_Position.Position_y >= 770 && m_Position.Position_y < 800)
@@ -176,7 +176,7 @@ void Ball::CheckGoal(Player* p1, Player* p2)
             m_Position.Position_y = 400;
             m_Accel.Accel_x = 0;
             m_Accel.Accel_y = 0;
-            p2->Goal();
+            //p2->Goal();
         }
     }
 }

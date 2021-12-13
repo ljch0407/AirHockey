@@ -39,9 +39,9 @@ void Player::UpdatePos_y(int pos)
 {
     m_Position.Position_y = pos;
 }
-void Player::Goal(void)
+void Player::Goal(int score)
 {
-    m_Goal++;
+    m_score = score;
 }
 
 int Player::GetScore(void)

@@ -189,8 +189,9 @@ DWORD WINAPI getClient(LPVOID arg)
 			err_display("recv()");
 		}
 
-		header = atoi(buf);
-		
+		int* temp = (int*)buf;
+		header = *temp;
+
 		//if (id == 0)
 		//	printf("[TCP 클라이언트1] 헤더 수신 완료: %d\n", header);
 		//else
@@ -249,8 +250,8 @@ DWORD WINAPI getClient(LPVOID arg)
 
 			//printf("[충돌 처리 정보] Accel.x: %f, Accel.y: %f\n", tempAccel->accel_x, tempAccel->accel_y);
 
-			bAccel.accel_x = tempAccel->accel_x / 20;
-			bAccel.accel_y = tempAccel->accel_y / 20;
+			bAccel.accel_x = tempAccel->accel_x / 40;
+			bAccel.accel_y = tempAccel->accel_y / 40;
 
 			break;
 		}
