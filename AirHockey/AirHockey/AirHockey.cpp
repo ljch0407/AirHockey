@@ -507,7 +507,7 @@ DWORD WINAPI Update(LPVOID arg)
         WaitForSingleObject(recvData, INFINITE);
 
         retval = recvn(client_sock, buf, sizeof(int), 0);
-        printf("헤더 데이터: %d\n", atoi(buf));
+        //printf("헤더 데이터: %d\n", atoi(buf));
         if (atoi(buf) == 2)
         {
             retval = recvn(client_sock, buf, sizeof(Point2D), 0);
@@ -515,7 +515,7 @@ DWORD WINAPI Update(LPVOID arg)
             Point2D* temp;
             temp = (Point2D*)buf;
 
-            printf("Position_X: %d, Position_Y: %d\n", temp->Position_x, temp->Position_y);
+            //printf("Position_X: %d, Position_Y: %d\n", temp->Position_x, temp->Position_y);
 
             ball.UpdatePos_x(temp->Position_x);
             ball.UpdatePos_y(temp->Position_y);
@@ -523,7 +523,7 @@ DWORD WINAPI Update(LPVOID arg)
             retval = recvn(client_sock, buf, sizeof(Point2D), 0);
             temp = (Point2D*)buf;
 
-            printf("2P - Position_X: %d, Position_Y: %d\n", temp->Position_x, temp->Position_y);
+            //printf("2P - Position_X: %d, Position_Y: %d\n", temp->Position_x, temp->Position_y);
 
             player2.UpdatePos_x(Poschangex(temp->Position_x));
             player2.UpdatePos_y(Poschangey(temp->Position_y));
