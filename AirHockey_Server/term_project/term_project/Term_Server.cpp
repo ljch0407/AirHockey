@@ -8,8 +8,6 @@
 #include <CommCtrl.h>
 #include "Server.h"
 
-SOCKET client_sock1, client_sock2;
-
 Point2D pPosition[2];
 Point2D bPosition;
 Accel2D bAccel;
@@ -165,8 +163,7 @@ DWORD WINAPI getClient(LPVOID arg)
 			err_display("recv()");
 		}
 
-		int* temp = (int*)buf;
-		header = *temp;
+		header = atoi(buf);
 
 		//if (id == 0)
 		//	printf("[TCP 클라이언트1] 헤더 수신 완료: %d\n", header);
@@ -270,16 +267,10 @@ DWORD WINAPI updateClient(LPVOID arg)
 
 		if (P1Goal || P2Goal)
 			snprintf(buf, sizeof(buf), "%d", GOAL);
-		//else if (!checkMoveBall())
-		//	//send strike-effect
-		//{
-
-		//}
 		else
 			snprintf(buf, sizeof(buf), "%d", B_POSITION);
 
-		int* temp = (int*)buf;
-		header = *temp;
+		header = atoi(buf);
 
 		switch (header)
 		{
@@ -297,9 +288,6 @@ DWORD WINAPI updateClient(LPVOID arg)
 				err_display("send()");
 			}
 
-			break;
-
-		case MOVE_BALL:
 			break;
 
 		case B_POSITION:
